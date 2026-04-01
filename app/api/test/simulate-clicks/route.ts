@@ -3,7 +3,6 @@ import dbConnect from '@/lib/mongodb';
 import ShareLink from '@/models/ShareLink';
 
 export async function POST(req: NextRequest) {
-  // Only allow in development
   if (process.env.NODE_ENV !== 'development') {
     return NextResponse.json({ error: 'Not allowed' }, { status: 403 });
   }
@@ -11,31 +10,48 @@ export async function POST(req: NextRequest) {
   await dbConnect();
   const { userId, count = 3 } = await req.json();
 
-  const shareLink = await ShareLink.findOne({ userId });
+  if (!userId) {
+    return NextResponse.json({ error: 'User ID required' }, { status: 400 });
+  }
+
+  let shareLink = await ShareLink.findOne({ userId });
   if (!shareLink) {
-    return NextResponse.json({ error: 'Share link not found' }, { status: 404 });
+    shareLink = await ShareLink.create({ 
+      userId, 
+      code: Math.random().toString(36).substring(2, 10),
+      clicks: [] 
+    });
   }
 
   // Simulate unique clicks
-  const uniqueIPs = new Set();
+  const existingIPs = new Set(shareLink.clicks.map((c: any) => c.ip));
+  let added = 0;
+  
   for (let i = 0; i < count; i++) {
-    uniqueIPs.add(`192.168.1.${i + 100}`);
+    const fakeIP = `192.168.1.${100 + i}`;
+    if (!existingIPs.has(fakeIP)) {
+      shareLink.clicks.push({
+        ip: fakeIP,
+        userAgent: 'Mozilla/5.0 (Test Simulator)',
+        timestamp: new Date(),
+      });
+      added++;
+    }
   }
   
-  uniqueIPs.forEach(ip => {
-    shareLink.clicks.push({
-      ip,
-      userAgent: 'Mozilla/5.0 (Test Simulator)',
-      timestamp: new Date(),
-      verified: true
-    });
-  });
+  // Auto-verify if we have 3+ unique clicks
+  const uniqueIPs = new Set(shareLink.clicks.map((c: any) => c.ip));
+  if (uniqueIPs.size >= 3 && !shareLink.verifiedAt) {
+    shareLink.verifiedAt = new Date();
+  }
   
   await shareLink.save();
   
   return NextResponse.json({ 
-    success: true, 
+    success: true,
+    message: `Added ${added} simulated clicks. Total unique: ${uniqueIPs.size}`,
     totalClicks: shareLink.clicks.length,
-    uniqueIPs: uniqueIPs.size
+    uniqueIPs: uniqueIPs.size,
+    verified: !!shareLink.verifiedAt
   });
 }

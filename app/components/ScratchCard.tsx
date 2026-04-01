@@ -17,12 +17,27 @@ export default function ScratchCard({ amount, onReveal }: ScratchCardProps) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Draw gray cover
-    ctx.fillStyle = '#888';
+    // Draw scratch card cover
+    ctx.fillStyle = '#C0C0C0';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#666';
-    ctx.font = 'bold 20px sans-serif';
-    ctx.fillText('Scratch here', 50, 100);
+    
+    // Add scratch pattern
+    ctx.fillStyle = '#A0A0A0';
+    for (let i = 0; i < 200; i++) {
+      ctx.fillRect(
+        Math.random() * canvas.width,
+        Math.random() * canvas.height,
+        3,
+        3
+      );
+    }
+    
+    // Add text
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillText('SCRATCH HERE', 90, 75);
+    ctx.font = '12px sans-serif';
+    ctx.fillText('to reveal your prize', 80, 100);
   }, []);
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -53,7 +68,7 @@ export default function ScratchCard({ amount, onReveal }: ScratchCardProps) {
         ref={canvasRef}
         width={300}
         height={150}
-        className="border rounded cursor-pointer"
+        className="border-4 border-yellow-500 rounded-lg cursor-pointer shadow-lg"
         onMouseDown={() => (isDrawing.current = true)}
         onMouseUp={() => (isDrawing.current = false)}
         onMouseLeave={() => (isDrawing.current = false)}
@@ -61,8 +76,12 @@ export default function ScratchCard({ amount, onReveal }: ScratchCardProps) {
         onClick={handleReveal}
       />
       {revealed && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 text-2xl font-bold">
-          KSH {amount}
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg shadow-inner">
+          <div className="text-center">
+            <p className="text-white text-sm mb-1">🎉 POTENTIAL PRIZE 🎉</p>
+            <p className="text-3xl font-bold text-white">KSH {amount}</p>
+            <p className="text-yellow-100 text-xs mt-2">Share to unlock your chance to win!</p>
+          </div>
         </div>
       )}
     </div>
