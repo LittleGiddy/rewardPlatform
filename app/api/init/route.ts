@@ -21,8 +21,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Network is required' }, { status: 400 });
   }
 
-  // Optional: validate network is one of allowed
-  const allowedNetworks = ['Yas', 'Airtel', 'Vodacom', 'Halotel'];
+  // Validate network is one of allowed
+  const allowedNetworks = ['Yas', 'Airtel', 'Vodacom', 'Halotel', 'MTN'];
   if (!allowedNetworks.includes(network)) {
     return NextResponse.json({ error: 'Invalid network' }, { status: 400 });
   }
@@ -36,20 +36,20 @@ export async function POST(req: NextRequest) {
   let user = await User.findOne({ deviceFingerprint: fingerprint, ipHash: ip });
   if (user) {
     user.network = network;
-    if (phone) user.phone = phone; // update phone if provided
+    if (phone) user.phone = phone;
     await user.save();
   } else {
     user = await User.create({
       network,
-      phone: phone || null, // can be null
+      phone: phone || null,
       deviceFingerprint: fingerprint,
       ipHash: ip,
       referralCode: Math.random().toString(36).substring(2, 10),
     });
   }
 
-  // Generate JWT
-  const token = signToken(user._id.toString());
+  // Generate JWT - AWAIT this if signToken is async
+  const token = await signToken(user._id.toString());
 
   const response = NextResponse.json({ success: true });
   response.cookies.set('token', token, {
@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
     secure: false,
     sameSite: 'lax',
     path: '/',
+    maxAge: 60 * 60 * 24 * 7, // 7 days
   });
 
   return response;

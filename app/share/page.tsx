@@ -22,7 +22,6 @@ export default function SharePage() {
     const res = await axios.post('/api/verify-share');
     if (res.data.verified) {
       setVerified(true);
-      // Proceed to claim
       const claimRes = await axios.post('/api/claim');
       if (claimRes.data.winner) {
         router.push('/winner?amount=' + claimRes.data.amount);
@@ -31,6 +30,17 @@ export default function SharePage() {
       }
     } else {
       alert(`You need 3 unique clicks. Current: ${res.data.clicks}`);
+    }
+  };
+
+  // Development skip function
+  const skipForTesting = async () => {
+    console.log('Skipping share verification for testing');
+    const claimRes = await axios.post('/api/claim');
+    if (claimRes.data.winner) {
+      router.push('/winner?amount=' + claimRes.data.amount);
+    } else {
+      router.push('/retry');
     }
   };
 
@@ -68,10 +78,20 @@ export default function SharePage() {
         <p className="text-center mb-4">Clicks so far: {clicks}</p>
         <button
           onClick={checkShares}
-          className="w-full bg-yellow-500 text-black py-3 rounded font-semibold"
+          className="w-full bg-yellow-500 text-black py-3 rounded font-semibold mb-3"
         >
           I've shared! Check & Claim
         </button>
+        
+        {/* Development skip button */}
+        {process.env.NODE_ENV === 'development' && (
+          <button
+            onClick={skipForTesting}
+            className="w-full bg-gray-500 text-white py-3 rounded font-semibold"
+          >
+            🧪 Skip Sharing (Dev Only)
+          </button>
+        )}
       </div>
     </div>
   );

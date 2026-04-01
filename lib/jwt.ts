@@ -1,18 +1,20 @@
-import jwt from 'jsonwebtoken';
+import { SignJWT, jwtVerify } from 'jose';
 
 const JWT_SECRET = process.env.JWT_SECRET!;
+const secret = new TextEncoder().encode(JWT_SECRET);
 
-export function signToken(userId: string) {
-  const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' });
-  console.log('Signing token for user:', userId, 'token length:', token.length);
+export async function signToken(userId: string) {
+  const token = await new SignJWT({ userId })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('7d')
+    .sign(secret);
   return token;
 }
 
-export function verifyToken(token: string) {
+export async function verifyToken(token: string) {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    console.log('Verifying token, decoded:', decoded);
-    return decoded as { userId: string };
+    const { payload } = await jwtVerify(token, secret);
+    return payload as { userId: string };
   } catch (err) {
     console.log('Token verification error:', err);
     return null;

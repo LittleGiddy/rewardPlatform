@@ -2,14 +2,13 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { verifyToken } from './lib/jwt';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
   const { pathname } = request.nextUrl;
 
-  // Log the request for debugging
   console.log(`[Middleware] Request: ${pathname}, Token exists: ${!!token}`);
 
-  // Public routes – allow without token
+  // Public routes
   if (
     pathname === '/' ||
     pathname.startsWith('/api/ref') ||
@@ -20,13 +19,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // For all other routes, require a valid token
   if (!token) {
     console.log(`[Middleware] No token, redirecting to / from ${pathname}`);
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  const payload = verifyToken(token);
+  const payload = await verifyToken(token);
   if (!payload) {
     console.log(`[Middleware] Invalid token, redirecting to / from ${pathname}`);
     return NextResponse.redirect(new URL('/', request.url));
@@ -34,7 +32,6 @@ export function middleware(request: NextRequest) {
 
   console.log(`[Middleware] Valid token for user ${payload.userId} on ${pathname}`);
 
-  // Attach user id to headers for API routes
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-user-id', payload.userId);
 
