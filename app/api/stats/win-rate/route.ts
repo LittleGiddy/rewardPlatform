@@ -3,6 +3,7 @@ import dbConnect from '@/lib/mongodb';
 import Winner from '@/models/Winner';
 import User from '@/models/User';
 
+
 export async function GET(req: NextRequest) {
   await dbConnect();
 
