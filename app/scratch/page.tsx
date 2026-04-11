@@ -51,8 +51,8 @@ export default function ScratchPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-purple-600 to-pink-600 p-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-        <h2 className="text-2xl font-bold mb-2 text-gray-800">🎁 Scratch to Reveal!</h2>
-        <p className="text-gray-600 mb-6">Scratch the card below to see your potential prize</p>
+        <h2 className="text-2xl font-bold mb-2 text-gray-800">🎁 Kwangua kufungua</h2>
+        <p className="text-gray-600 mb-6">Kwangua hapa chini kufungua zawadi yako</p>
         
         <div className="flex justify-center mb-6">
           <ScratchCard amount={amount!} onReveal={handleReveal} />
@@ -60,8 +60,8 @@ export default function ScratchPage() {
         
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <p className="text-sm text-yellow-800">
-            💡 <strong>How it works:</strong> Scratch to reveal your potential prize. 
-            Then share with 3 friends to unlock your chance to actually win it!
+            💡 <strong>Cha Kufanya:</strong> Kwangua ili kuangalia vocha. 
+            Kisha share kwa marafiki watatu ili kufungua zawadi ya vocha
           </p>
         </div>
       </div>

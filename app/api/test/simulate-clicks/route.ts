@@ -3,6 +3,7 @@ import dbConnect from '@/lib/mongodb';
 import ShareLink from '@/models/ShareLink';
 
 export async function POST(req: NextRequest) {
+  // Only allow in development
   if (process.env.NODE_ENV !== 'development') {
     return NextResponse.json({ error: 'Not allowed' }, { status: 403 });
   }
@@ -28,14 +29,16 @@ export async function POST(req: NextRequest) {
   let added = 0;
   
   for (let i = 0; i < count; i++) {
-    const fakeIP = `192.168.1.${100 + i}`;
+    const fakeIP = `192.168.1.${300 + i + shareLink.clicks.length}`;
     if (!existingIPs.has(fakeIP)) {
       shareLink.clicks.push({
         ip: fakeIP,
         userAgent: 'Mozilla/5.0 (Test Simulator)',
         timestamp: new Date(),
+        verified: true
       });
       added++;
+      existingIPs.add(fakeIP);
     }
   }
   

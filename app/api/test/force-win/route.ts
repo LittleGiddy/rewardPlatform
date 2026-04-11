@@ -4,14 +4,16 @@ import User from '@/models/User';
 import Voucher from '@/models/Voucher';
 import Winner from '@/models/Winner';
 import ShareLink from '@/models/ShareLink';
+import Attempt from '@/models/Attempt';
 
 export async function POST(req: NextRequest) {
+  // Only allow in development
   if (process.env.NODE_ENV !== 'development') {
     return NextResponse.json({ error: 'Not allowed' }, { status: 403 });
   }
 
   await dbConnect();
-  const { userId } = await req.json();
+  const { userId, amount = 5000 } = await req.json();
 
   if (!userId) {
     return NextResponse.json({ error: 'User ID required' }, { status: 400 });
@@ -33,11 +35,13 @@ export async function POST(req: NextRequest) {
   }
   
   // Add simulated clicks if needed
-  if (shareLink.clicks.length < 3) {
-    for (let i = 0; i < 3; i++) {
+  const existingIPs = new Set(shareLink.clicks.map((c: any) => c.ip));
+  for (let i = 0; i < 3; i++) {
+    const fakeIP = `192.168.1.${400 + i}`;
+    if (!existingIPs.has(fakeIP)) {
       shareLink.clicks.push({
-        ip: `192.168.1.${200 + i}`,
-        userAgent: 'Test',
+        ip: fakeIP,
+        userAgent: 'Test Simulator',
         timestamp: new Date(),
       });
     }
@@ -45,38 +49,45 @@ export async function POST(req: NextRequest) {
   shareLink.verifiedAt = new Date();
   await shareLink.save();
 
-  // Create a winning voucher if none exists
-  let voucher = await Voucher.findById(user.currentVoucherId);
-  if (!voucher) {
-    voucher = await Voucher.create({
-      network: user.network,
-      amount: 5000,
-      status: 'locked',
-    });
-    user.currentVoucherId = voucher._id;
-    user.currentRevealedAmount = 5000;
-    await user.save();
-  }
+  // Create a winning voucher
+  const voucher = await Voucher.create({
+    network: user.network,
+    amount: amount,
+    status: 'available',
+    winnerId: userId,
+  });
 
-  // Mark as winner
-  voucher.status = 'available';
-  voucher.winnerId = userId;
-  await voucher.save();
-
+  // Record winner
   await Winner.create({
     userId,
     voucherId: voucher._id,
-    prizeAmount: voucher.amount,
+    prizeAmount: amount,
     network: user.network,
+    wonAt: new Date(),
   });
 
+  // Clear any existing voucher from user
+  if (user.currentVoucherId) {
+    await Voucher.findByIdAndDelete(user.currentVoucherId);
+  }
+  
   user.currentVoucherId = null;
   user.currentRevealedAmount = null;
+  user.consecutiveLosses = 0; // Reset streak on win
   await user.save();
+
+  // Reset attempts so user can scratch again
+  const today = new Date().toISOString().split('T')[0];
+  await Attempt.findOneAndDelete({ 
+    userFingerprint: user.deviceFingerprint, 
+    date: today 
+  });
 
   return NextResponse.json({ 
     success: true, 
-    message: 'User forced to win!',
-    amount: voucher.amount
+    message: `You won ${amount} TSH!`,
+    amount: amount,
+    voucherCode: voucher.voucherCode,
+    userId: user._id
   });
 }

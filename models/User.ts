@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const UserSchema = new mongoose.Schema({
-  phone: { type: String, required: false }, // optional
+  phone: { type: String, required: false },
   network: { type: String, required: true },
   deviceFingerprint: { type: String, required: true },
   ipHash: { type: String, required: true },
@@ -11,7 +11,9 @@ const UserSchema = new mongoose.Schema({
   lastAttemptAt: Date,
   lockUntil: Date,
   referralCode: { type: String, unique: true },
+  consecutiveLosses: { type: Number, default: 0 }, // Track losses for streak bonus
+  totalWins: { type: Number, default: 0 },
+  totalAttempts: { type: Number, default: 0 },
 });
 
-// Export the model, using existing if available (for Next.js hot reloading)
 export default mongoose.models.User || mongoose.model('User', UserSchema);

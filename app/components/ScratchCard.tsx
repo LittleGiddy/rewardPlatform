@@ -35,9 +35,9 @@ export default function ScratchCard({ amount, onReveal }: ScratchCardProps) {
     // Add text
     ctx.fillStyle = '#FFFFFF';
     ctx.font = 'bold 16px sans-serif';
-    ctx.fillText('SCRATCH HERE', 90, 75);
+    ctx.fillText('KWANGUA HAPA', 90, 75);
     ctx.font = '12px sans-serif';
-    ctx.fillText('to reveal your prize', 80, 100);
+    ctx.fillText('kufungua zawadi yako', 80, 100);
   }, []);
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -79,7 +79,7 @@ export default function ScratchCard({ amount, onReveal }: ScratchCardProps) {
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg shadow-inner">
           <div className="text-center">
             <p className="text-white text-sm mb-1">🎉 POTENTIAL PRIZE 🎉</p>
-            <p className="text-3xl font-bold text-white">KSH {amount}</p>
+            <p className="text-3xl font-bold text-white">TSH {amount}</p>
             <p className="text-yellow-100 text-xs mt-2">Share to unlock your chance to win!</p>
           </div>
         </div>

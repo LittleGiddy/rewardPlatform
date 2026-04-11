@@ -15,7 +15,6 @@ export async function POST(req: NextRequest) {
   let user;
   
   if (userId) {
-    // Find existing user by ID
     user = await User.findById(userId);
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -28,6 +27,7 @@ export async function POST(req: NextRequest) {
       deviceFingerprint: `test-${Date.now()}`,
       ipHash: '127.0.0.1',
       referralCode: Math.random().toString(36).substring(2, 10),
+      consecutiveLosses: 0,
     });
   }
 

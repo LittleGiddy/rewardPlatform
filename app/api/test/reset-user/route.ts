@@ -5,6 +5,7 @@ import Attempt from '@/models/Attempt';
 import Voucher from '@/models/Voucher';
 
 export async function POST(req: NextRequest) {
+  // Only allow in development
   if (process.env.NODE_ENV !== 'development') {
     return NextResponse.json({ error: 'Not allowed' }, { status: 403 });
   }
@@ -26,11 +27,12 @@ export async function POST(req: NextRequest) {
     await Voucher.findByIdAndDelete(user.currentVoucherId);
   }
 
-  // Reset user state
+  // Reset user state - preserve streak for testing
   user.currentVoucherId = null;
   user.currentRevealedAmount = null;
   user.lastAttemptAt = null;
   user.lockUntil = null;
+  // Don't reset consecutiveLosses to maintain streak for testing
   await user.save();
 
   // Clear attempts for today
@@ -42,6 +44,7 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ 
     success: true, 
-    message: 'User reset successfully' 
+    message: 'User reset successfully',
+    consecutiveLosses: user.consecutiveLosses
   });
 }

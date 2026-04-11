@@ -20,7 +20,6 @@ global.mongoose = cached;
 
 async function dbConnect() {
   if (cached.conn) {
-    console.log('Using existing MongoDB connection');
     return cached.conn;
   }
 
@@ -28,14 +27,30 @@ async function dbConnect() {
     const opts = {
       bufferCommands: false,
       maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
-      socketTimeoutMS: 45000, // Close sockets after 45 seconds
-      family: 4, // Use IPv4, skip trying IPv6
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      family: 4,
     };
     
     console.log('Creating new MongoDB connection...');
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then(async (mongoose) => {
       console.log('MongoDB connected successfully');
+      
+      // Handle index creation gracefully
+      try {
+        // Drop problematic index if it exists
+        const collection = mongoose.connection.collection('vouchers');
+        const indexes = await collection.indexes();
+        const problematicIndex = indexes.find(idx => idx.name === 'voucherCode_1');
+        
+        if (problematicIndex) {
+          console.log('Dropping conflicting index: voucherCode_1');
+          await collection.dropIndex('voucherCode_1');
+        }
+      } catch (error) {
+        console.log('Index cleanup error (can be ignored):', error);
+      }
+      
       return mongoose;
     }).catch((err) => {
       console.error('MongoDB connection error:', err);
