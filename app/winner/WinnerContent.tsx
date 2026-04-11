@@ -1,19 +1,24 @@
 'use client';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
 
 export default function WinnerContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [mounted, setMounted] = useState(false);
+  
   const amount = searchParams.get('amount');
   const voucherCode = searchParams.get('code');
 
+  // Only run confetti on client-side after mount
   useEffect(() => {
-    // Trigger confetti on win
-    confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 } });
-    confetti({ particleCount: 100, spread: 70, origin: { y: 0.5, x: 0.3 } });
-    confetti({ particleCount: 100, spread: 70, origin: { y: 0.5, x: 0.7 } });
+    setMounted(true);
+    if (typeof window !== 'undefined') {
+      confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 } });
+      confetti({ particleCount: 100, spread: 70, origin: { y: 0.5, x: 0.3 } });
+      confetti({ particleCount: 100, spread: 70, origin: { y: 0.5, x: 0.7 } });
+    }
   }, []);
 
   const copyToClipboard = () => {
@@ -22,6 +27,15 @@ export default function WinnerContent() {
       alert('Voucher code copied!');
     }
   };
+
+  // Don't render until mounted to avoid hydration issues
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-green-500 to-green-700">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-green-500 to-green-700 p-4">
