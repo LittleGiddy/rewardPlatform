@@ -12,28 +12,27 @@ export default function AdminLayout({
   const pathname = usePathname();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
-  // Check authentication
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const res = await fetch('/api/admin/auth/check');
         const data = await res.json();
+        console.log('Auth check result:', data);
         setIsAuthenticated(data.authenticated);
-      } catch {
+      } catch (err) {
+        console.error('Auth check failed:', err);
         setIsAuthenticated(false);
       }
     };
     checkAuth();
   }, []);
 
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (isAuthenticated === false && pathname !== '/admin/login') {
-      router.push('/admin/login');
+      router.replace('/admin/login');
     }
   }, [isAuthenticated, pathname, router]);
 
-  // Show nothing while checking auth (prevents flash)
   if (isAuthenticated === null) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
@@ -42,6 +41,13 @@ export default function AdminLayout({
     );
   }
 
+  if (pathname === '/admin/login') {
+    return <>{children}</>;
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
   // Don't show sidebar on login page
   if (pathname === '/admin/login') {
     return <>{children}</>;
