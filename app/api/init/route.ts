@@ -2,112 +2,73 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import { signToken } from '@/lib/jwt';
-import { generateFingerprint } from '@/lib/fingerprint';
-
-function getClientIp(req: NextRequest): string {
-  // For Vercel, check multiple headers
-  const forwardedFor = req.headers.get('x-forwarded-for');
-  if (forwardedFor) {
-    return forwardedFor.split(',')[0].trim();
-  }
-  
-  const realIp = req.headers.get('x-real-ip');
-  if (realIp) {
-    return realIp;
-  }
-  
-  const vercelIp = req.headers.get('x-vercel-forwarded-for');
-  if (vercelIp) {
-    return vercelIp.split(',')[0].trim();
-  }
-  
-  return 'unknown';
-}
 
 export async function POST(req: NextRequest) {
-  // Simplified error handling for production
+  console.log('[INIT] === START ===');
+  
   try {
-    console.log('[INIT] Starting...');
-    
-    // Parse request body
-    const body = await req.json().catch(() => null);
-    if (!body) {
-      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
-    }
-    
-    const { network, phone } = body;
+    // Step 1: Parse body
+    console.log('[INIT] Step 1: Parsing body');
+    const body = await req.json();
+    const { network } = body;
+    console.log('[INIT] Network:', network);
     
     if (!network) {
-      return NextResponse.json({ error: 'Network is required' }, { status: 400 });
+      console.log('[INIT] No network provided');
+      return NextResponse.json({ error: 'Network required' }, { status: 400 });
     }
     
-    // Validate network
-    const allowedNetworks = ['Yas', 'Airtel', 'Vodacom', 'Halotel', 'MTN', 'Test'];
-    if (!allowedNetworks.includes(network)) {
-      return NextResponse.json({ error: 'Invalid network' }, { status: 400 });
-    }
-    
-    // Connect to database
+    // Step 2: Connect to DB
+    console.log('[INIT] Step 2: Connecting to DB');
     await dbConnect();
+    console.log('[INIT] DB Connected');
     
-    // Get fingerprint
-    const ip = getClientIp(req);
-    const userAgent = req.headers.get('user-agent') || 'unknown';
-    const fingerprint = generateFingerprint(ip, userAgent);
+    // Step 3: Create simple fingerprint
+    console.log('[INIT] Step 3: Creating fingerprint');
+    const fingerprint = `vercel-${Date.now()}-${Math.random()}`;
     
-    // Find or create user
+    // Step 4: Find or create user
+    console.log('[INIT] Step 4: Finding/Creating user');
     let user = await User.findOne({ deviceFingerprint: fingerprint });
     
-    if (user) {
-      user.network = network;
-      if (phone) user.phone = phone;
-      await user.save();
-    } else {
+    if (!user) {
+      console.log('[INIT] Creating new user');
       user = await User.create({
         network,
-        phone: phone || null,
         deviceFingerprint: fingerprint,
-        ipHash: ip,
+        ipHash: 'vercel-deployment',
         referralCode: Math.random().toString(36).substring(2, 10),
-        consecutiveLosses: 0,
       });
+      console.log('[INIT] User created:', user._id);
+    } else {
+      console.log('[INIT] User found:', user._id);
+      user.network = network;
+      await user.save();
     }
     
-    // Generate JWT token
+    // Step 5: Generate token
+    console.log('[INIT] Step 5: Generating token');
     const token = await signToken(user._id.toString());
+    console.log('[INIT] Token generated');
     
-    // Set cookie and return
-    const response = NextResponse.json({ success: true, userId: user._id });
-    
-    // Production cookie settings
-    const isProduction = process.env.NODE_ENV === 'production';
-    
+    // Step 6: Set cookie and return
+    console.log('[INIT] Step 6: Setting cookie');
+    const response = NextResponse.json({ success: true });
     response.cookies.set('token', token, {
       httpOnly: true,
-      secure: isProduction, // true in production (HTTPS)
+      secure: true,
       sameSite: 'lax',
       path: '/',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 7,
     });
     
+    console.log('[INIT] === SUCCESS ===');
     return response;
     
   } catch (error) {
-    console.error('[INIT] Error:', error);
-    
-    // Return a user-friendly error message
-    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
-    
-    // Check for specific MongoDB errors
-    if (errorMessage.includes('MongoNetworkError') || errorMessage.includes('connection')) {
-      return NextResponse.json(
-        { error: 'Database connection issue. Please try again.' },
-        { status: 500 }
-      );
-    }
-    
+    console.error('[INIT] ERROR:', error);
     return NextResponse.json(
-      { error: 'Something went wrong. Please try again.' },
+      { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
