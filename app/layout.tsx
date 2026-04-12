@@ -13,9 +13,11 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// IMPORTANT: Add metadataBase for absolute URLs
 export const metadata: Metadata = {
+  metadataBase: new URL("https://reward-platform-black.vercel.app"),
   title: "Vuna Vocha - Shinda Vocha za TZS!",
-  description: "Kwangua, shiriki, na shinda vocha za TZS kutoka Vodacom, Airtel, Yas, Halotel na MTN. Nafasi ya kushinda kila siku!",
+  description: "Kwangua, shiriki, na shinda vocha za TZS kutoka Vodacom, Airtel, Yas, Halotel. Nafasi ya kushinda kila siku!",
   keywords: "vocha, zawadi, Tanzania, shinda pesa, Vuna Vocha, scratch card, vocha za simu",
   authors: [{ name: "Vuna Vocha" }],
   openGraph: {
@@ -27,7 +29,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/vuna.jpeg",
+        url: "/vuna.png",
         width: 1200,
         height: 630,
         alt: "Vuna Vocha - Shinda Vocha za TZS",
@@ -38,7 +40,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Vuna Vocha - Shinda Vocha za TZS!",
     description: "Kwangua, shiriki, na shinda vocha za TZS! Nafasi ya kushinda kila siku.",
-    images: ["/vuna.jpeg"],
+    images: ["/vuna.png"],
   },
   icons: {
     icon: "/favicon.ico",
@@ -47,10 +49,6 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
-  },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
   },
 };
 
