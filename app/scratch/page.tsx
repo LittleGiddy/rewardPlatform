@@ -2,7 +2,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import dynamic from 'next/dynamic';
 import ScratchCard from '../components/ScratchCard';
+
+// Dynamically import Ad component to avoid SSR issues
+const AdsterraAd = dynamic(() => import('../components/AdsterraAds'), { ssr: false });
 
 export default function ScratchPage() {
   const router = useRouter();
@@ -58,12 +62,20 @@ export default function ScratchPage() {
           <ScratchCard amount={amount!} onReveal={handleReveal} />
         </div>
         
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
           <p className="text-sm text-yellow-800">
             💡 <strong>Cha Kufanya:</strong> Kwangua ili kuangalia vocha. 
             Kisha share kwa marafiki watatu ili kufungua zawadi ya vocha
           </p>
         </div>
+
+        {/* ADSTERRA AD - Code 2 */}
+        {process.env.NODE_ENV === 'production' && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <p className="text-xs text-gray-400 text-center mb-2">Advertisement</p>
+            <AdsterraAd adCode={process.env.NEXT_PUBLIC_ADSTERRA_AD2 || ''} />
+          </div>
+        )}
       </div>
     </div>
   );

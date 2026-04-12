@@ -2,6 +2,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import dynamic from 'next/dynamic';
+
+const AdsterraAd = dynamic(() => import('../components/AdsterraAds'), { ssr: false });
 
 export default function SharePage() {
   const router = useRouter();
@@ -30,7 +33,6 @@ export default function SharePage() {
         totalAttempts: userRes.data.totalAttempts || 0
       });
       
-      // Find pool info for this amount
       const pools = vouchersRes.data.pools || [];
       const userPool = pools.find((p: any) => p.amount === amount);
       if (userPool) {
@@ -49,14 +51,10 @@ export default function SharePage() {
     setClaiming(true);
     setError('');
     try {
-      console.log('Checking shares...');
       const res = await axios.post('/api/verify-share');
-      console.log('Verify response:', res.data);
       
       if (res.data.verified) {
-        console.log('Shares verified, claiming...');
         const claimRes = await axios.post('/api/claim');
-        console.log('Claim response:', claimRes.data);
         
         if (claimRes.data.winner) {
           router.push(`/winner?amount=${claimRes.data.amount}&code=${claimRes.data.voucherCode}`);
@@ -83,8 +81,17 @@ export default function SharePage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-blue-600 to-purple-700">
-      {/* Card - Works on any background */}
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
+        
+        {/* TOP BANNER - Desktop (728x90) - Code 3 */}
+        {process.env.NODE_ENV === 'production' && (
+          <div className="hidden md:block mb-6 -mt-4">
+            <div className="bg-gray-50 rounded-lg p-2">
+              <p className="text-xs text-gray-400 text-center mb-2">Advertisement</p>
+              <AdsterraAd adCode={process.env.NEXT_PUBLIC_ADSTERRA_AD3 || ''} />
+            </div>
+          </div>
+        )}
         
         {/* Potential Prize Section */}
         <div className="text-center mb-6">
@@ -94,27 +101,21 @@ export default function SharePage() {
           <div className="text-4xl font-bold text-green-600">
             TZS {potentialAmount?.toLocaleString()}
           </div>
-          <p className="mt-2 text-gray-600">
-            Unaweza kushinda kiasi hiki!
-          </p>
+          <p className="mt-2 text-gray-600">Unaweza kushinda kiasi hiki!</p>
         </div>
 
         {/* Low Stock Warning */}
         {poolInfo && poolInfo.remainingVouchers <= 10 && poolInfo.remainingVouchers > 0 && (
           <div className="bg-orange-100 border border-orange-400 text-orange-700 px-4 py-3 rounded-lg mb-4 text-center">
             <p className="text-sm font-semibold">⚠️ Zawadi chache zimesalia!</p>
-            <p className="text-xs">
-              Zimebaki {poolInfo.remainingVouchers} tu kwa kiasi hiki!
-            </p>
+            <p className="text-xs">Zimebaki {poolInfo.remainingVouchers} tu kwa kiasi hiki!</p>
           </div>
         )}
 
         {poolInfo && poolInfo.remainingVouchers === 0 && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4 text-center">
             <p className="text-sm font-semibold">❌ Zawadi zimeisha!</p>
-            <p className="text-xs">
-              Hakuna zawadi zilizobaki kwa kiasi hiki. Tafadhali jaribu tena kwa kiasi kingine.
-            </p>
+            <p className="text-xs">Hakuna zawadi zilizobaki kwa kiasi hiki. Tafadhali jaribu tena.</p>
           </div>
         )}
 
@@ -188,12 +189,8 @@ export default function SharePage() {
         {/* Progress Section */}
         <div className="bg-gray-100 rounded-lg p-4 mb-6">
           <div className="flex justify-between items-center mb-2">
-            <p className="font-medium text-gray-700">
-              Vibonyezo vya Kipekee
-            </p>
-            <p className="text-lg font-bold text-blue-600">
-              {clicks} / 3
-            </p>
+            <p className="font-medium text-gray-700">Vibonyezo vya Kipekee</p>
+            <p className="text-lg font-bold text-blue-600">{clicks} / 3</p>
           </div>
           <div className="w-full bg-gray-300 rounded-full h-3">
             <div 
@@ -236,6 +233,14 @@ export default function SharePage() {
         <p className="text-xs text-gray-500 text-center mt-6">
           Kila mtu ana nafasi ya kushinda vocha. Shiriki kwa marafiki watatu ili kupata nafasi zaidi ya kushinda!
         </p>
+
+        {/* BOTTOM BANNER - Mobile (320x50) - Code 4 */}
+        {process.env.NODE_ENV === 'production' && (
+          <div className="block md:hidden mt-6 pt-4 border-t border-gray-200">
+            <p className="text-xs text-gray-400 text-center mb-2">Advertisement</p>
+            <AdsterraAd adCode={process.env.NEXT_PUBLIC_ADSTERRA_AD4 || ''} />
+          </div>
+        )}
       </div>
     </div>
   );
