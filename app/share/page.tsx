@@ -13,18 +13,6 @@ export default function SharePage() {
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState(false);
   const [error, setError] = useState('');
-  const [darkMode, setDarkMode] = useState(false);
-
-  // Check for dark mode
-  useEffect(() => {
-    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setDarkMode(isDark);
-    
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = (e: MediaQueryListEvent) => setDarkMode(e.matches);
-    mediaQuery.addEventListener('change', handler);
-    return () => mediaQuery.removeEventListener('change', handler);
-  }, []);
 
   useEffect(() => {
     // Get share link and user info
@@ -94,31 +82,26 @@ export default function SharePage() {
   );
 
   return (
-    <div className={`min-h-screen flex flex-col items-center justify-center p-4 transition-colors duration-300 ${
-      darkMode ? 'bg-gradient-to-b from-gray-900 to-gray-800' : 'bg-gradient-to-b from-blue-600 to-purple-700'
-    }`}>
-      <div className={`rounded-2xl shadow-2xl p-8 max-w-md w-full transition-colors duration-300 ${
-        darkMode ? 'bg-gray-800' : 'bg-white'
-      }`}>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-blue-600 to-purple-700">
+      {/* Card - Works on any background */}
+      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
         
         {/* Potential Prize Section */}
         <div className="text-center mb-6">
-          <div className={`inline-block rounded-full px-4 py-2 mb-4 ${
-            darkMode ? 'bg-yellow-900/50 text-yellow-300' : 'bg-yellow-100 text-yellow-800'
-          }`}>
-            <span className="font-bold">🎯 UNA NAFASI YA KUSHINDA</span>
+          <div className="inline-block bg-yellow-100 rounded-full px-4 py-2 mb-4">
+            <span className="font-bold text-yellow-800">🎯 UNA NAFASI YA KUSHINDA</span>
           </div>
-          <div className={`text-4xl font-bold ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+          <div className="text-4xl font-bold text-green-600">
             TZS {potentialAmount?.toLocaleString()}
           </div>
-          <p className={`mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          <p className="mt-2 text-gray-600">
             Unaweza kushinda kiasi hiki!
           </p>
         </div>
 
         {/* Low Stock Warning */}
         {poolInfo && poolInfo.remainingVouchers <= 10 && poolInfo.remainingVouchers > 0 && (
-          <div className="bg-orange-100 border border-orange-400 text-orange-700 px-4 py-3 rounded-lg mb-4 text-center dark:bg-orange-900/30 dark:border-orange-600 dark:text-orange-300">
+          <div className="bg-orange-100 border border-orange-400 text-orange-700 px-4 py-3 rounded-lg mb-4 text-center">
             <p className="text-sm font-semibold">⚠️ Zawadi chache zimesalia!</p>
             <p className="text-xs">
               Zimebaki {poolInfo.remainingVouchers} tu kwa kiasi hiki!
@@ -127,7 +110,7 @@ export default function SharePage() {
         )}
 
         {poolInfo && poolInfo.remainingVouchers === 0 && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4 text-center dark:bg-red-900/30 dark:border-red-600 dark:text-red-300">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4 text-center">
             <p className="text-sm font-semibold">❌ Zawadi zimeisha!</p>
             <p className="text-xs">
               Hakuna zawadi zilizobaki kwa kiasi hiki. Tafadhali jaribu tena kwa kiasi kingine.
@@ -137,7 +120,7 @@ export default function SharePage() {
 
         {/* Streak Bonus Display */}
         {streakInfo && streakInfo.consecutiveLosses > 0 && (
-          <div className="bg-purple-100 border border-purple-400 text-purple-700 px-4 py-3 rounded-lg mb-4 text-center dark:bg-purple-900/30 dark:border-purple-600 dark:text-purple-300">
+          <div className="bg-purple-100 border border-purple-400 text-purple-700 px-4 py-3 rounded-lg mb-4 text-center">
             <p className="text-sm font-semibold">💪 BONASI YA MSURUDO IMEANZISHA!</p>
             <p className="text-xs">
               Umepoteza mara {streakInfo.consecutiveLosses} mfululizo.
@@ -149,16 +132,16 @@ export default function SharePage() {
           </div>
         )}
 
-        <h2 className={`text-2xl font-bold mb-4 text-center ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+        <h2 className="text-2xl font-bold mb-4 text-center text-gray-800">
           Shiriki Kufungua Nafasi Yako!
         </h2>
-        <p className={`text-center mb-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-          Shiriki kwa <strong className={darkMode ? 'text-blue-400' : 'text-blue-600'}>MARAFIKI 3</strong>. 
+        <p className="text-center text-gray-600 mb-6">
+          Shiriki kwa <strong className="text-blue-600">MARAFIKI 3</strong>. 
           Kila rafiki anapaswa kubonyeza link ili kukupa nafasi ya kushinda.
         </p>
         
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4 dark:bg-red-900/30 dark:border-red-600 dark:text-red-300">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
             {error}
           </div>
         )}
@@ -169,9 +152,7 @@ export default function SharePage() {
             type="text"
             value={link}
             readOnly
-            className={`flex-1 border rounded-l-lg px-3 py-2 text-sm ${
-              darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'
-            }`}
+            className="flex-1 border border-gray-300 rounded-l-lg px-3 py-2 text-sm text-gray-800 bg-white"
           />
           <button
             onClick={() => {
@@ -205,28 +186,28 @@ export default function SharePage() {
         </div>
         
         {/* Progress Section */}
-        <div className={`rounded-lg p-4 mb-6 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+        <div className="bg-gray-100 rounded-lg p-4 mb-6">
           <div className="flex justify-between items-center mb-2">
-            <p className={`font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <p className="font-medium text-gray-700">
               Vibonyezo vya Kipekee
             </p>
-            <p className={`text-lg font-bold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+            <p className="text-lg font-bold text-blue-600">
               {clicks} / 3
             </p>
           </div>
-          <div className={`w-full rounded-full h-3 ${darkMode ? 'bg-gray-600' : 'bg-gray-300'}`}>
+          <div className="w-full bg-gray-300 rounded-full h-3">
             <div 
               className="bg-green-500 rounded-full h-3 transition-all duration-300"
               style={{ width: `${Math.min(100, (clicks / 3) * 100)}%` }}
             ></div>
           </div>
           {clicks < 3 && (
-            <p className={`text-xs mt-2 text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            <p className="text-xs text-gray-500 mt-2 text-center">
               Unahitaji {3 - clicks} zaidi kufungua
             </p>
           )}
           {clicks >= 3 && (
-            <p className="text-xs text-green-600 mt-2 text-center font-semibold dark:text-green-400">
+            <p className="text-xs text-green-600 mt-2 text-center font-semibold">
               ✓ Tayari kudai! Bonyeza kitufe chini.
             </p>
           )}
@@ -239,7 +220,7 @@ export default function SharePage() {
           className={`w-full py-3 rounded-lg font-semibold transition mb-3 ${
             clicks >= 3 && poolInfo?.remainingVouchers !== 0
               ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black hover:from-yellow-500 hover:to-orange-600 shadow-lg' 
-              : `${darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-500'} cursor-not-allowed`
+              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
           } disabled:opacity-50`}
         >
           {claiming 
@@ -252,19 +233,9 @@ export default function SharePage() {
         </button>
 
         {/* Footer Note */}
-        <p className={`text-xs text-center mt-6 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+        <p className="text-xs text-gray-500 text-center mt-6">
           Kila mtu ana nafasi ya kushinda vocha. Shiriki kwa marafiki watatu ili kupata nafasi zaidi ya kushinda!
         </p>
-
-        {/* Dark Mode Toggle */}
-        <button
-          onClick={() => setDarkMode(!darkMode)}
-          className={`mt-4 w-full py-2 rounded-lg text-sm transition ${
-            darkMode ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          {darkMode ? '☀️ Mwangaza' : '🌙 Giza'}
-        </button>
       </div>
     </div>
   );
