@@ -9,6 +9,9 @@ const CountdownTimer = dynamic(() => import('./components/CountdownTimer'), {
   loading: () => <span className="text-3xl font-mono">--:--:--</span>
 });
 
+// Dynamically import Adsterra Hero component
+const AdsterraHero = dynamic(() => import('@/components/AdsterraHero'), { ssr: false });
+
 export default function Home() {
   const router = useRouter();
   const [counter, setCounter] = useState(1247);
@@ -299,7 +302,7 @@ export default function Home() {
           </button>
 
           {/* Trust Badges */}
-          <div className="flex flex-wrap justify-center gap-4 text-xs">
+          <div className="flex flex-wrap justify-center gap-4 text-xs mb-8">
             <div className={`flex items-center gap-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
               <span className="text-green-500">✓</span>
               <span>100% Free</span>
@@ -313,6 +316,16 @@ export default function Home() {
               <span>24/7 Support</span>
             </div>
           </div>
+
+          {/* ADSTERRA HERO AD */}
+          {process.env.NODE_ENV === 'production' && (
+            <div className="w-full max-w-md mx-auto mb-8">
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2">
+                <p className="text-xs text-gray-400 text-center mb-2">Advertisement</p>
+                <AdsterraHero />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer - All rights reserved at the bottom */}
