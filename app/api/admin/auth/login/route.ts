@@ -4,38 +4,38 @@ export async function POST(req: NextRequest) {
   try {
     const { username, password } = await req.json();
     
-    console.log('Login attempt:', { username, passwordProvided: !!password });
+    // NO FALLBACKS - must be set in environment
+    const validUsername = process.env.ADMIN_USERNAME;
+    const validPassword = process.env.ADMIN_PASSWORD;
     
-    // Get credentials from environment variables
-    const validUsername = process.env.ADMIN_USERNAME || 'admin';
-    const validPassword = process.env.ADMIN_PASSWORD || 'admin123';
-    
-    console.log('Expected:', { validUsername, validPasswordProvided: !!validPassword });
+    // If environment variables are missing, reject all logins
+    if (!validUsername || !validPassword) {
+      console.error('Admin credentials not configured in environment');
+      return NextResponse.json(
+        { error: 'System configuration error' },
+        { status: 500 }
+      );
+    }
     
     if (username === validUsername && password === validPassword) {
       const response = NextResponse.json({ success: true });
-      
       response.cookies.set('admin_auth', 'true', {
         httpOnly: true,
         secure: true,
-        sameSite: 'lax',
+        sameSite: 'strict',
         path: '/',
-        maxAge: 60 * 60 * 24,
+        maxAge: 60 * 60 * 2, // 2 hours only
       });
-      
-      console.log('Login successful');
       return response;
     }
     
-    console.log('Login failed - invalid credentials');
     return NextResponse.json(
-      { error: 'Invalid username or password' },
+      { error: 'Invalid credentials' },
       { status: 401 }
     );
   } catch (error) {
-    console.error('Login error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Login failed' },
       { status: 500 }
     );
   }

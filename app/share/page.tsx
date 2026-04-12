@@ -106,7 +106,7 @@ export default function SharePage() {
           <div className={`inline-block rounded-full px-4 py-2 mb-4 ${
             darkMode ? 'bg-yellow-900/50 text-yellow-300' : 'bg-yellow-100 text-yellow-800'
           }`}>
-            <span className="font-bold">🎯 ZAWADI YANAYOWEZANA</span>
+            <span className="font-bold">🎯 UNA NAFASI YA KUSHINDA</span>
           </div>
           <div className={`text-4xl font-bold ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
             TZS {potentialAmount?.toLocaleString()}
@@ -154,7 +154,7 @@ export default function SharePage() {
         </h2>
         <p className={`text-center mb-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
           Shiriki kwa <strong className={darkMode ? 'text-blue-400' : 'text-blue-600'}>MARAFIKI 3</strong>. 
-          Kila rafiki anapaswa kubonyeza kiungo chako ili kukupa nafasi ya kushinda.
+          Kila rafiki anapaswa kubonyeza link ili kukupa nafasi ya kushinda.
         </p>
         
         {error && (

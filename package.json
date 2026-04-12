@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.37.0",
     "axios": "^1.13.6",
     "canvas-confetti": "^1.9.4",
     "confetti": "^3.0.4",
@@ -35,4 +37,3 @@
     "typescript": "^5"
   }
 }
-
