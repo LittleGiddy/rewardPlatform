@@ -3,32 +3,39 @@ import type { NextRequest } from 'next/server';
 import { verifyToken } from './lib/jwt';
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  
-  // Allow all API routes to pass through for debugging
-  if (pathname.startsWith('/api/')) {
-    console.log(`[Middleware] Allowing API route: ${pathname}`);
-    return NextResponse.next();
-  }
-  
   const token = request.cookies.get('token')?.value;
+  const { pathname } = request.nextUrl;
 
-  // Public routes
-  const publicRoutes = ['/', '/network'];
+  console.log(`[Middleware] Path: ${pathname}, Token: ${!!token}`);
+
+  // Public routes - no auth required
+  const publicRoutes = ['/', '/network', '/api/init', '/api/ref'];
   
-  if (publicRoutes.includes(pathname)) {
+  // Check if route is public
+  const isPublicRoute = publicRoutes.some(route => 
+    pathname === route || pathname.startsWith(route + '/')
+  );
+
+  if (isPublicRoute) {
     return NextResponse.next();
   }
 
+  // Require token for all other routes
   if (!token) {
+    console.log(`[Middleware] No token, redirecting to /`);
     return NextResponse.redirect(new URL('/', request.url));
   }
 
+  // Verify token
   const payload = await verifyToken(token);
-  if (!payload) {
+  if (!payload || !payload.userId) {
+    console.log(`[Middleware] Invalid token`);
     return NextResponse.redirect(new URL('/', request.url));
   }
 
+  console.log(`[Middleware] User ${payload.userId} accessing ${pathname}`);
+
+  // Clone headers and add user ID
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-user-id', payload.userId);
 
