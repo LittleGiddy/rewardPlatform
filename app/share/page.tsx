@@ -13,6 +13,18 @@ export default function SharePage() {
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState(false);
   const [error, setError] = useState('');
+  const [darkMode, setDarkMode] = useState(false);
+
+  // Check for dark mode
+  useEffect(() => {
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setDarkMode(isDark);
+    
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e: MediaQueryListEvent) => setDarkMode(e.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
 
   useEffect(() => {
     // Get share link and user info
@@ -65,102 +77,120 @@ export default function SharePage() {
         }
       } else {
         const needed = 3 - res.data.clicks;
-        setError(`Need ${needed} more unique ${needed === 1 ? 'click' : 'clicks'}. Current: ${res.data.clicks}`);
+        setError(`Unahitaji ${needed} ${needed === 1 ? 'click' : 'clicks'} zaidi. Sasa: ${res.data.clicks}`);
         setClaiming(false);
       }
     } catch (err: any) {
       console.error('Error details:', err.response?.data);
-      setError(err.response?.data?.error || 'Something went wrong. Please try again.');
+      setError(err.response?.data?.error || 'Kuna tatizo. Tafadhali jaribu tena.');
       setClaiming(false);
     }
   };
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-600 to-purple-700">
+      <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white"></div>
     </div>
   );
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-600 to-purple-700 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
+    <div className={`min-h-screen flex flex-col items-center justify-center p-4 transition-colors duration-300 ${
+      darkMode ? 'bg-gradient-to-b from-gray-900 to-gray-800' : 'bg-gradient-to-b from-blue-600 to-purple-700'
+    }`}>
+      <div className={`rounded-2xl shadow-2xl p-8 max-w-md w-full transition-colors duration-300 ${
+        darkMode ? 'bg-gray-800' : 'bg-white'
+      }`}>
+        
+        {/* Potential Prize Section */}
         <div className="text-center mb-6">
-          <div className="inline-block bg-yellow-100 rounded-full px-4 py-2 mb-4">
-            <span className="text-yellow-800 font-bold">🎯 POTENTIAL PRIZE</span>
+          <div className={`inline-block rounded-full px-4 py-2 mb-4 ${
+            darkMode ? 'bg-yellow-900/50 text-yellow-300' : 'bg-yellow-100 text-yellow-800'
+          }`}>
+            <span className="font-bold">🎯 ZAWADI YANAYOWEZANA</span>
           </div>
-          <div className="text-4xl font-bold text-green-600">TZS {potentialAmount?.toLocaleString()}</div>
-          <p className="text-gray-600 mt-2">Unaweza kushinda kiasi hiki!</p>
+          <div className={`text-4xl font-bold ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+            TZS {potentialAmount?.toLocaleString()}
+          </div>
+          <p className={`mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            Unaweza kushinda kiasi hiki!
+          </p>
         </div>
 
         {/* Low Stock Warning */}
         {poolInfo && poolInfo.remainingVouchers <= 10 && poolInfo.remainingVouchers > 0 && (
-          <div className="bg-orange-100 border border-orange-400 text-orange-700 px-4 py-3 rounded-lg mb-4 text-center">
-            <p className="text-sm font-semibold">⚠️ Limited Stock!</p>
+          <div className="bg-orange-100 border border-orange-400 text-orange-700 px-4 py-3 rounded-lg mb-4 text-center dark:bg-orange-900/30 dark:border-orange-600 dark:text-orange-300">
+            <p className="text-sm font-semibold">⚠️ Zawadi chache zimesalia!</p>
             <p className="text-xs">
-              Only {poolInfo.remainingVouchers} voucher{poolInfo.remainingVouchers !== 1 ? 's' : ''} left at this amount!
+              Zimebaki {poolInfo.remainingVouchers} tu kwa kiasi hiki!
             </p>
           </div>
         )}
 
         {poolInfo && poolInfo.remainingVouchers === 0 && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4 text-center">
-            <p className="text-sm font-semibold">❌ Out of Stock!</p>
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4 text-center dark:bg-red-900/30 dark:border-red-600 dark:text-red-300">
+            <p className="text-sm font-semibold">❌ Zawadi zimeisha!</p>
             <p className="text-xs">
-              No vouchers left at this amount. Please scratch again for a different amount.
+              Hakuna zawadi zilizobaki kwa kiasi hiki. Tafadhali jaribu tena kwa kiasi kingine.
             </p>
           </div>
         )}
 
         {/* Streak Bonus Display */}
         {streakInfo && streakInfo.consecutiveLosses > 0 && (
-          <div className="bg-purple-100 border border-purple-400 text-purple-700 px-4 py-3 rounded-lg mb-4 text-center">
-            <p className="text-sm font-semibold">💪 STREAK BONUS ACTIVE!</p>
+          <div className="bg-purple-100 border border-purple-400 text-purple-700 px-4 py-3 rounded-lg mb-4 text-center dark:bg-purple-900/30 dark:border-purple-600 dark:text-purple-300">
+            <p className="text-sm font-semibold">💪 BONASI YA MSURUDO IMEANZISHA!</p>
             <p className="text-xs">
-              You've lost {streakInfo.consecutiveLosses} time{streakInfo.consecutiveLosses !== 1 ? 's' : ''} in a row.
-              Your chances are increasing!
+              Umepoteza mara {streakInfo.consecutiveLosses} mfululizo.
+              Nafasi yako ya kushinda inaongezeka!
             </p>
             <p className="text-xs mt-1">
-              {streakInfo.consecutiveLosses >= 5 ? '🔥 Maximum bonus reached!' : `+${(streakInfo.consecutiveLosses * 0.1).toFixed(1)}% extra chance!`}
+              {streakInfo.consecutiveLosses >= 5 ? '🔥 Umezidi kiwango cha juu!' : `+${(streakInfo.consecutiveLosses * 0.1).toFixed(1)}% nafasi zaidi!`}
             </p>
           </div>
         )}
 
-        <h2 className="text-2xl font-bold mb-4 text-center">Share kufungua nafasi yako!</h2>
-        <p className="text-center text-gray-600 mb-6">
-          Share kwa <strong className="text-blue-600">Marafiki watatu</strong>. 
-          Kila rafiki anapaswa kufungua link ili kukupa nafasi ya kushinda.
+        <h2 className={`text-2xl font-bold mb-4 text-center ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+          Shiriki Kufungua Nafasi Yako!
+        </h2>
+        <p className={`text-center mb-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+          Shiriki kwa <strong className={darkMode ? 'text-blue-400' : 'text-blue-600'}>MARAFIKI 3</strong>. 
+          Kila rafiki anapaswa kubonyeza kiungo chako ili kukupa nafasi ya kushinda.
         </p>
         
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4 dark:bg-red-900/30 dark:border-red-600 dark:text-red-300">
             {error}
           </div>
         )}
         
+        {/* Share Link Section */}
         <div className="flex mb-4">
           <input
             type="text"
             value={link}
             readOnly
-            className="flex-1 border rounded-l px-3 py-2 text-sm"
+            className={`flex-1 border rounded-l-lg px-3 py-2 text-sm ${
+              darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'
+            }`}
           />
           <button
             onClick={() => {
               navigator.clipboard.writeText(link);
-              alert('Link copied to clipboard!');
+              alert('Kiungo kimenakiliwa!');
             }}
-            className="bg-blue-600 text-white px-4 py-2 rounded-r hover:bg-blue-700"
+            className="bg-blue-600 text-white px-4 py-2 rounded-r-lg hover:bg-blue-700 transition"
           >
-            Copy
+            Nakili
           </button>
         </div>
         
+        {/* Social Share Buttons */}
         <div className="flex gap-2 mb-6">
           <a
-            href={`https://wa.me/?text=${encodeURIComponent('🎉 I just scratched a TZS ' + potentialAmount + ' voucher! Click my link to claim yours too: ' + link)}`}
+            href={`https://wa.me/?text=${encodeURIComponent('🎉 Nimepata zawadi ya TZS ' + potentialAmount + '! Bonyeza kiungo changu upate nafasi yako: ' + link)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-green-500 text-white px-4 py-2 rounded flex-1 text-center hover:bg-green-600 transition"
+            className="bg-green-500 text-white px-4 py-2 rounded-lg flex-1 text-center hover:bg-green-600 transition"
           >
             WhatsApp
           </a>
@@ -168,56 +198,73 @@ export default function SharePage() {
             href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-blue-500 text-white px-4 py-2 rounded flex-1 text-center hover:bg-blue-600 transition"
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg flex-1 text-center hover:bg-blue-600 transition"
           >
             Facebook
           </a>
         </div>
         
-        <div className="bg-gray-100 rounded-lg p-4 mb-6">
+        {/* Progress Section */}
+        <div className={`rounded-lg p-4 mb-6 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
           <div className="flex justify-between items-center mb-2">
-            <p className="text-gray-700 font-medium">Unique Clicks</p>
-            <p className="text-lg font-bold text-blue-600">{clicks} / 3</p>
+            <p className={`font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              Vibonyezo vya Kipekee
+            </p>
+            <p className={`text-lg font-bold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+              {clicks} / 3
+            </p>
           </div>
-          <div className="w-full bg-gray-300 rounded-full h-3">
+          <div className={`w-full rounded-full h-3 ${darkMode ? 'bg-gray-600' : 'bg-gray-300'}`}>
             <div 
               className="bg-green-500 rounded-full h-3 transition-all duration-300"
               style={{ width: `${Math.min(100, (clicks / 3) * 100)}%` }}
             ></div>
           </div>
           {clicks < 3 && (
-            <p className="text-xs text-gray-500 mt-2 text-center">
-              Need {3 - clicks} more {3 - clicks === 1 ? 'friend' : 'friends'} to unlock
+            <p className={`text-xs mt-2 text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              Unahitaji {3 - clicks} zaidi kufungua
             </p>
           )}
           {clicks >= 3 && (
-            <p className="text-xs text-green-600 mt-2 text-center font-semibold">
-              ✓ Ready to claim! Click the button below.
+            <p className="text-xs text-green-600 mt-2 text-center font-semibold dark:text-green-400">
+              ✓ Tayari kudai! Bonyeza kitufe chini.
             </p>
           )}
         </div>
 
+        {/* Claim Button */}
         <button
           onClick={checkShares}
           disabled={claiming || clicks < 3 || (poolInfo?.remainingVouchers === 0)}
           className={`w-full py-3 rounded-lg font-semibold transition mb-3 ${
             clicks >= 3 && poolInfo?.remainingVouchers !== 0
-              ? 'bg-yellow-500 text-black hover:bg-yellow-600' 
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black hover:from-yellow-500 hover:to-orange-600 shadow-lg' 
+              : `${darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-500'} cursor-not-allowed`
           } disabled:opacity-50`}
         >
           {claiming 
-            ? 'Processing...' 
+            ? 'Inachakata...' 
             : clicks >= 3 
               ? poolInfo?.remainingVouchers === 0 
-                ? '❌ Out of Stock - Scratch Again' 
-                : '🔓 Unlock My Chance!' 
-              : '🔒 Unahitaji marafiki watatu kufungua'}
+                ? '❌ Zawadi Zimeisha - Jaribu Tena' 
+                : '🔓 Fungua Nafasi Yangu!' 
+              : '🔒 Unahitaji Marafiki Watatu Kufungua'}
         </button>
 
-        <p className="text-xs text-gray-500 text-center mt-6">
-          Kila mtu ana nafasi ya kushinda vocha, usisahau kushare kwa marafiki watatu ili uweze kupata nafasi zaidi
+        {/* Footer Note */}
+        <p className={`text-xs text-center mt-6 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+          Kila mtu ana nafasi ya kushinda vocha. Shiriki kwa marafiki watatu ili kupata nafasi zaidi ya kushinda!
         </p>
+
+        {/* Dark Mode Toggle */}
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          className={`mt-4 w-full py-2 rounded-lg text-sm transition ${
+            darkMode ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          }`}
+        >
+          {darkMode ? '☀️ Mwangaza' : '🌙 Giza'}
+        </button>
       </div>
     </div>
   );
