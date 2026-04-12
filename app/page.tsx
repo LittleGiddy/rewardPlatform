@@ -10,7 +10,7 @@ const CountdownTimer = dynamic(() => import('./components/CountdownTimer'), {
 });
 
 // Dynamically import Adsterra Hero component
-const AdsterraHero = dynamic(() => import('@/components/AdsterraHero'), { ssr: false });
+const AdsterraHero = dynamic(() => import('./components/AdsterraHero'), { ssr: false });
 
 export default function Home() {
   const router = useRouter();
