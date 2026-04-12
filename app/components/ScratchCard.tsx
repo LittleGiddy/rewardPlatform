@@ -35,7 +35,7 @@ export default function ScratchCard({ amount, onReveal }: ScratchCardProps) {
     // Add text
     ctx.fillStyle = '#FFFFFF';
     ctx.font = 'bold 16px sans-serif';
-    ctx.fillText('KWANGUA HAPA', 90, 75);
+    ctx.fillText('BONYEZA HAPA', 90, 75);
     ctx.font = '12px sans-serif';
     ctx.fillText('kufungua zawadi yako', 80, 100);
   }, []);
