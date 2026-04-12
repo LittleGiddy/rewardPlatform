@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/vuna.png",
+        url: "/vuna.jpg",
         width: 1200,
         height: 630,
         alt: "Vuna Vocha - Shinda Vocha za TZS",
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Vuna Vocha - Shinda Vocha za TZS!",
     description: "Kwangua, shiriki, na shinda vocha za TZS! Nafasi ya kushinda kila siku.",
-    images: ["/vuna.png"],
+    images: ["/vuna.jpg"],
   },
   icons: {
     icon: "/favicon.ico",
