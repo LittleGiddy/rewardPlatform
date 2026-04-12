@@ -18,7 +18,6 @@ export default function Home() {
   const [targetTime, setTargetTime] = useState<number | null>(null);
   const [showOverlay, setShowOverlay] = useState(true);
   const [floatingMessages, setFloatingMessages] = useState<any[]>([]);
-  const [darkMode, setDarkMode] = useState(false);
   const [recentWinners, setRecentWinners] = useState([
     { name: "James M.", amount: "1,500", network: "Vodacom", time: "just now", country: "TZ" },
     { name: "Sarah K.", amount: "500", network: "Airtel", time: "2 min ago", country: "TZ" },
@@ -48,12 +47,6 @@ export default function Home() {
       }, 100);
     }
   }, [showOverlay]);
-
-  // Check system preference for dark mode
-  useEffect(() => {
-    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setDarkMode(isDark);
-  }, []);
 
   useEffect(() => {
     setTargetTime(Date.now() + 24 * 60 * 60 * 1000);
@@ -130,12 +123,12 @@ export default function Home() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-95 animate-fadeIn">
           <div className="relative max-w-sm mx-4 animate-slideUp">
             <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl p-1 shadow-2xl">
-              <div className={`rounded-xl p-6 text-center ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+              <div className="rounded-xl p-6 text-center bg-white">
                 <div className="text-6xl mb-3 animate-bounce">🎁</div>
-                <h2 className={`text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                <h2 className="text-2xl font-bold mb-2 text-gray-800">
                   Special Offer!
                 </h2>
-                <p className={`text-sm mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                <p className="text-sm mb-3 text-gray-600">
                   You've been selected for an exclusive voucher
                 </p>
                 <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg p-3 mb-3">
@@ -154,9 +147,7 @@ export default function Home() {
       )}
 
       {/* Main Content */}
-      <div className={`min-h-screen relative transition-colors duration-300 flex flex-col ${
-        darkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50'
-      }`}>
+      <div className="min-h-screen relative flex flex-col bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
         
         {/* Simplified Background */}
         <div className="absolute inset-0 opacity-30">
@@ -175,16 +166,16 @@ export default function Home() {
               animation: 'floatUp 7s ease-out forwards'
             }}
           >
-            <div className={`rounded-xl shadow-lg p-2 max-w-[200px] ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className="rounded-xl shadow-lg p-2 max-w-[200px] bg-white">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center text-white font-bold text-xs">
                   {msg.avatar}
                 </div>
                 <div className="flex-1">
-                  <p className={`font-semibold text-xs ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                  <p className="font-semibold text-xs text-gray-800">
                     {msg.name}
                   </p>
-                  <p className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  <p className="text-xs text-gray-600">
                     {msg.message}
                   </p>
                 </div>
@@ -194,13 +185,11 @@ export default function Home() {
         ))}
 
         {/* Live Social Proof Ticker */}
-        <div className={`fixed top-0 left-0 right-0 backdrop-blur-md z-20 py-1 border-b ${
-          darkMode ? 'bg-gray-900/80 border-gray-700' : 'bg-white/80 border-gray-200'
-        }`}>
+        <div className="fixed top-0 left-0 right-0 backdrop-blur-md z-20 py-1 border-b bg-white/80 border-gray-200">
           <div className="overflow-hidden whitespace-nowrap">
             <div className="inline-block animate-scroll">
               {[...recentWinners, ...recentWinners].map((winner, idx) => (
-                <span key={idx} className={`mx-3 text-xs ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                <span key={idx} className="mx-3 text-xs text-gray-600">
                   🎉 {winner.name} won TZS {winner.amount} on {winner.network}
                 </span>
               ))}
@@ -209,18 +198,16 @@ export default function Home() {
         </div>
 
         {/* Main Content Area - Flex grow to push footer down */}
-        <div className="relative z-10 flex-grow flex flex-col items-center justify-center px-4 pt-16 pb-8">
+        <div className="relative z-10 flex-grow flex flex-col items-center justify-center px-4 pt-20 pb-8">
           
           {/* Logo at the top */}
-          <div className="mb-8 text-center">
+          <div className="mb-6 text-center">
             <div className="inline-flex items-center justify-center">
-              {/* Logo Image - Replace with your actual logo */}
               <img 
                 src="/logo.png" 
                 alt="Vuna Vocha Logo" 
-                className="h-56 md:h-50 w-auto object-contain"
+                className="h-32 md:h-40 w-auto object-contain"
                 onError={(e) => {
-                  // Fallback if logo doesn't exist
                   e.currentTarget.style.display = 'none';
                 }}
               />
@@ -236,25 +223,19 @@ export default function Home() {
 
           {/* Main Title */}
           <div className="text-center mb-3">
-            <h1 className={`text-4xl md:text-6xl font-bold mb-2 ${
-              darkMode ? 'text-white' : 'text-gray-800'
-            }`}>
+            <h1 className="text-4xl md:text-6xl font-bold mb-2 text-gray-800">
               Umechaguliwa!
             </h1>
             <div className="h-0.5 w-16 bg-gradient-to-r from-yellow-400 to-orange-500 mx-auto rounded-full"></div>
           </div>
           
-          <p className={`text-base md:text-lg text-center mb-8 ${
-            darkMode ? 'text-gray-300' : 'text-gray-600'
-          }`}>
+          <p className="text-base md:text-lg text-center mb-8 text-gray-600">
             Una nafasi kubwa ya kushinda vocha
           </p>
 
           {/* Timer Card */}
-          <div className={`rounded-xl p-4 mb-6 shadow-lg border w-full max-w-xs ${
-            darkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-white/50 border-gray-200'
-          } backdrop-blur-sm`}>
-            <p className={`text-center text-xs mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+          <div className="rounded-xl p-4 mb-6 shadow-lg border w-full max-w-xs bg-white/50 border-gray-200 backdrop-blur-sm">
+            <p className="text-center text-xs mb-1 text-gray-600">
               ⏰ Offer ends in:
             </p>
             <div className="text-2xl md:text-3xl font-mono font-bold text-yellow-500 text-center">
@@ -264,26 +245,22 @@ export default function Home() {
 
           {/* Stats - 2 columns */}
           <div className="grid grid-cols-2 gap-3 mb-8 max-w-md w-full">
-            <div className={`rounded-lg p-3 text-center border ${
-              darkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-white/50 border-gray-200'
-            } backdrop-blur-sm`}>
+            <div className="rounded-lg p-3 text-center border bg-white/50 border-gray-200 backdrop-blur-sm">
               <div className="text-2xl mb-1">👥</div>
-              <div className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+              <div className="text-xl font-bold text-gray-800">
                 {counter.toLocaleString()}+
               </div>
-              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              <p className="text-xs text-gray-500">
                 Wamejishindia leo
               </p>
             </div>
             
-            <div className={`rounded-lg p-3 text-center border ${
-              darkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-white/50 border-gray-200'
-            } backdrop-blur-sm`}>
+            <div className="rounded-lg p-3 text-center border bg-white/50 border-gray-200 backdrop-blur-sm">
               <div className="text-2xl mb-1">⭐</div>
-              <div className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+              <div className="text-xl font-bold text-gray-800">
                 4.8
               </div>
-              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              <p className="text-xs text-gray-500">
                 User Rating
               </p>
             </div>
@@ -293,7 +270,7 @@ export default function Home() {
           <button
             ref={ctaRef}
             onClick={() => router.push('/network')}
-            className="group relative bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white px-8 py-3 rounded-full text-lg font-bold hover:scale-105 transition-all duration-300 shadow-xl mb-8"
+            className="group relative bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white px-6 md:px-8 py-3 rounded-full text-base md:text-lg font-bold hover:scale-105 transition-all duration-300 shadow-xl mb-8"
           >
             <span className="relative z-10 flex items-center gap-2">
               🎁 Chagua Mtandao wako
@@ -303,15 +280,15 @@ export default function Home() {
 
           {/* Trust Badges */}
           <div className="flex flex-wrap justify-center gap-4 text-xs mb-8">
-            <div className={`flex items-center gap-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            <div className="flex items-center gap-1 text-gray-500">
               <span className="text-green-500">✓</span>
               <span>100% Free</span>
             </div>
-            <div className={`flex items-center gap-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            <div className="flex items-center gap-1 text-gray-500">
               <span className="text-green-500">✓</span>
               <span>Instant Payout</span>
             </div>
-            <div className={`flex items-center gap-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            <div className="flex items-center gap-1 text-gray-500">
               <span className="text-green-500">✓</span>
               <span>24/7 Support</span>
             </div>
@@ -329,10 +306,8 @@ export default function Home() {
         </div>
 
         {/* Footer - All rights reserved at the bottom */}
-        <footer ref={footerRef} className={`relative z-10 text-center py-4 border-t ${
-          darkMode ? 'border-gray-800 text-gray-500' : 'border-gray-200 text-gray-400'
-        }`}>
-          <p className="text-xs">
+        <footer ref={footerRef} className="relative z-10 text-center py-4 border-t border-gray-200">
+          <p className="text-xs text-gray-400">
             &copy; {new Date().getFullYear()} Vuna Vocha. All rights reserved. Developed by LITTLE GIDDY
           </p>
         </footer>
