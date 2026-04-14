@@ -139,6 +139,7 @@ export default function SharePage() {
         <p className="text-center text-gray-600 mb-6">
           Shiriki kwa <strong className="text-blue-600">MARAFIKI 3</strong>. 
           Kila rafiki anapaswa kubonyeza link ili kukupa nafasi ya kushinda.
+          
         </p>
         
         {error && (
