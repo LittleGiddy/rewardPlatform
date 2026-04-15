@@ -55,6 +55,7 @@ export default function SharePage() {
     try {
       const res = await axios.post('/api/verify-share');
       
+      // BACKEND: Only 1 click required to verify
       if (res.data.verified) {
         const claimRes = await axios.post('/api/claim');
         
@@ -64,8 +65,9 @@ export default function SharePage() {
           router.push('/retry');
         }
       } else {
-        const needed = 3 - res.data.clicks;
-        setError(`Unahitaji ${needed} ${needed === 1 ? 'click' : 'clicks'} zaidi. Sasa: ${res.data.clicks}`);
+        // User hasn't reached 1 click yet
+        const needed = 1 - res.data.clicks;
+        setError(`Unahitaji ${needed} ${needed === 1 ? 'click' : 'clicks'} zaidi. Sasa: ${res.data.clicks}/1`);
         setClaiming(false);
       }
     } catch (err: any) {
@@ -78,11 +80,9 @@ export default function SharePage() {
   const closePopup = () => {
     setShowPopup(false);
     setHasClosedPopup(true);
-    // Save to localStorage so it doesn't show again for this session
     localStorage.setItem('sharePagePopupClosed', 'true');
   };
 
-  // Check if user has closed popup before
   useEffect(() => {
     const popupClosed = localStorage.getItem('sharePagePopupClosed');
     if (popupClosed === 'true') {
@@ -99,17 +99,14 @@ export default function SharePage() {
 
   return (
     <>
-      {/* Popup Modal - Shows after loading is complete */}
+      {/* Popup Modal */}
       {!loading && showPopup && !hasClosedPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 animate-fadeIn p-4">
           <div className="relative max-w-md w-full bg-white rounded-2xl shadow-2xl overflow-hidden animate-slideUp">
-            {/* Header with gradient */}
             <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 text-white text-center">
               <div className="text-4xl mb-2">💡</div>
               <h3 className="text-xl font-bold">Muhimu Kukumbuka!</h3>
             </div>
-            
-            {/* Content */}
             <div className="p-6 text-center">
               <p className="text-gray-700 mb-4 leading-relaxed">
                 Hakikisha unarefresh ukurasa wako baada ya marafiki watatu kufungua kiungo chako.
@@ -126,8 +123,6 @@ export default function SharePage() {
                 Naelewa, Endelea →
               </button>
             </div>
-            
-            {/* Close button (X) */}
             <button
               onClick={closePopup}
               className="absolute top-2 right-3 text-white hover:text-gray-200 transition text-2xl font-bold"
@@ -142,7 +137,7 @@ export default function SharePage() {
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-blue-600 to-purple-700">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
           
-          {/* TOP BANNER - Desktop (728x90) - Code 3 */}
+          {/* TOP BANNER - Desktop */}
           {process.env.NODE_ENV === 'production' && (
             <div className="hidden md:block mb-6 -mt-4">
               <div className="bg-gray-50 rounded-lg p-2">
@@ -162,6 +157,16 @@ export default function SharePage() {
             </div>
             <p className="mt-2 text-gray-600">Unaweza kushinda kiasi hiki!</p>
           </div>
+
+          {/* Small Banner Below Prize */}
+          {process.env.NODE_ENV === 'production' && (
+            <div className="mb-6">
+              <div className="bg-gray-50 rounded-lg p-2">
+                <p className="text-xs text-gray-400 text-center mb-2">Advertisement</p>
+                <AdsterraAd adCode={process.env.NEXT_PUBLIC_ADSTERRA_AD1 || ''} />
+              </div>
+            </div>
+          )}
 
           {/* Low Stock Warning */}
           {poolInfo && poolInfo.remainingVouchers <= 10 && poolInfo.remainingVouchers > 0 && (
@@ -245,7 +250,17 @@ export default function SharePage() {
             </a>
           </div>
           
-          {/* Progress Section */}
+          {/* Ad Between Share Buttons and Progress */}
+          {process.env.NODE_ENV === 'production' && (
+            <div className="mb-6">
+              <div className="bg-gray-50 rounded-lg p-2">
+                <p className="text-xs text-gray-400 text-center mb-2">Advertisement</p>
+                <AdsterraAd adCode={process.env.NEXT_PUBLIC_ADSTERRA_AD2 || ''} />
+              </div>
+            </div>
+          )}
+          
+          {/* Progress Section - Shows 3 clicks needed visually */}
           <div className="bg-gray-100 rounded-lg p-4 mb-6">
             <div className="flex justify-between items-center mb-2">
               <p className="font-medium text-gray-700">Vibonyezo vya Kipekee</p>
@@ -257,9 +272,14 @@ export default function SharePage() {
                 style={{ width: `${Math.min(100, (clicks / 3) * 100)}%` }}
               ></div>
             </div>
-            {clicks < 3 && (
+            {clicks < 1 && (
               <p className="text-xs text-gray-500 mt-2 text-center">
-                Unahitaji {3 - clicks} zaidi kufungua
+                Unahitaji marafiki watatu kufungua (click moja inatosha)
+              </p>
+            )}
+            {clicks >= 1 && clicks < 3 && (
+              <p className="text-xs text-green-600 mt-2 text-center font-semibold">
+                ✓ Tayari kudai! Bonyeza kitufe chini.
               </p>
             )}
             {clicks >= 3 && (
@@ -269,31 +289,41 @@ export default function SharePage() {
             )}
           </div>
 
-          {/* Claim Button */}
+          {/* Claim Button - Unlocks at 1 click */}
           <button
             onClick={checkShares}
-            disabled={claiming || clicks < 3 || (poolInfo?.remainingVouchers === 0)}
+            disabled={claiming || clicks < 1 || (poolInfo?.remainingVouchers === 0)}
             className={`w-full py-3 rounded-lg font-semibold transition mb-3 ${
-              clicks >= 3 && poolInfo?.remainingVouchers !== 0
+              clicks >= 1 && poolInfo?.remainingVouchers !== 0
                 ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black hover:from-yellow-500 hover:to-orange-600 shadow-lg' 
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             } disabled:opacity-50`}
           >
             {claiming 
               ? 'Inachakata...' 
-              : clicks >= 3 
+              : clicks >= 1 
                 ? poolInfo?.remainingVouchers === 0 
                   ? '❌ Zawadi Zimeisha - Jaribu Tena' 
                   : '🔓 Fungua Nafasi Yangu!' 
-                : '🔒 Unahitaji Marafiki Watatu Kufungua'}
+                : '🔒 Unahitaji Mrafiki 1 Kufungua'}
           </button>
+
+          {/* Ad Between Claim Button and Footer */}
+          {process.env.NODE_ENV === 'production' && (
+            <div className="mb-4">
+              <div className="bg-gray-50 rounded-lg p-2">
+                <p className="text-xs text-gray-400 text-center mb-2">Advertisement</p>
+                <AdsterraAd adCode={process.env.NEXT_PUBLIC_ADSTERRA_AD3 || ''} />
+              </div>
+            </div>
+          )}
 
           {/* Footer Note */}
           <p className="text-xs text-gray-500 text-center mt-6">
             Kila mtu ana nafasi ya kushinda vocha. Shiriki kwa marafiki watatu ili kupata nafasi zaidi ya kushinda!
           </p>
 
-          {/* BOTTOM BANNER - Mobile (320x50) - Code 4 */}
+          {/* Bottom Banner (Mobile) */}
           {process.env.NODE_ENV === 'production' && (
             <div className="block md:hidden mt-6 pt-4 border-t border-gray-200">
               <p className="text-xs text-gray-400 text-center mb-2">Advertisement</p>
@@ -303,15 +333,10 @@ export default function SharePage() {
         </div>
       </div>
 
-      {/* Global Styles for Animations */}
       <style jsx global>{`
         @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
         
         @keyframes slideUp {
@@ -325,13 +350,8 @@ export default function SharePage() {
           }
         }
         
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out;
-        }
-        
-        .animate-slideUp {
-          animation: slideUp 0.4s ease-out;
-        }
+        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+        .animate-slideUp { animation: slideUp 0.4s ease-out; }
       `}</style>
     </>
   );
