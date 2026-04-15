@@ -19,7 +19,6 @@ export default function SharePage() {
   const [showPopup, setShowPopup] = useState(true);
   const [hasClosedPopup, setHasClosedPopup] = useState(false);
   const [displayClicks, setDisplayClicks] = useState(0);
-  
 
   useEffect(() => {
     // Get share link and user info
@@ -31,6 +30,7 @@ export default function SharePage() {
       setLink(shareRes.data.link);
       const actualClicks = shareRes.data.clickCount;
       setClicks(actualClicks);
+      // Display clicks: if actual >= 1, show 3/3, otherwise show actual
       setDisplayClicks(actualClicks >= 1 ? 3 : actualClicks);
       
       const amount = userRes.data.currentVoucherAmount;
@@ -60,6 +60,7 @@ export default function SharePage() {
     try {
       const res = await axios.post('/api/verify-share');
       
+      // BACKEND: Only 1 click required to verify
       if (res.data.verified) {
         const claimRes = await axios.post('/api/claim');
         
@@ -69,6 +70,7 @@ export default function SharePage() {
           router.push('/retry');
         }
       } else {
+        // User hasn't reached 1 click yet
         const needed = 1 - res.data.clicks;
         setError(`Unahitaji ${needed} ${needed === 1 ? 'click' : 'clicks'} zaidi. Sasa: ${res.data.clicks}/1`);
         setClaiming(false);
@@ -93,6 +95,7 @@ export default function SharePage() {
         const res = await axios.get('/api/share-link');
         const actualClicks = res.data.clickCount;
         setClicks(actualClicks);
+        // Display clicks: if actual >= 1, show 3/3, otherwise show actual
         setDisplayClicks(actualClicks >= 1 ? 3 : actualClicks);
       } catch (err) {
         console.error('Failed to refresh clicks:', err);
@@ -116,12 +119,10 @@ export default function SharePage() {
     </div>
   );
 
+  // Determine if button should be enabled (actual clicks >= 1)
   const isUnlocked = clicks >= 1;
+  // Determine progress percentage (0%, 50%, or 100%)
   const progressPercent = clicks >= 1 ? 100 : (displayClicks / 3) * 100;
-
-  // Create share URLs
-  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent('🎉 Nimepata zawadi ya TZS ' + potentialAmount + '! Bonyeza kiungo changu upate nafasi yako: ' + link)}`;
-  const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`;
 
   return (
     <>
@@ -256,33 +257,25 @@ export default function SharePage() {
             </button>
           </div>
           
-{/* Social Share Buttons with Ad Link */}
-<div className="flex gap-2 mb-6">
-  <a
-    href="https://www.profitablecpmratenetwork.com/k3hsq3eq?key=970b1239d65e56cfd7963d947a2351ba"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="bg-green-500 text-white px-4 py-2 rounded-lg flex-1 text-center hover:bg-green-600 transition"
-    onClick={() => {
-      // Also open WhatsApp share
-      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-    }}
-  >
-    WhatsApp
-  </a>
-  <a
-    href="https://www.profitablecpmratenetwork.com/k3hsq3eq?key=970b1239d65e56cfd7963d947a2351ba"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="bg-blue-500 text-white px-4 py-2 rounded-lg flex-1 text-center hover:bg-blue-600 transition"
-    onClick={() => {
-      // Also open Facebook share
-      window.open(facebookUrl, '_blank', 'noopener,noreferrer');
-    }}
-  >
-    Facebook
-  </a>
-</div>
+          {/* Social Share Buttons */}
+          <div className="flex gap-2 mb-6">
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent('🎉 Nimepata zawadi ya TZS ' + potentialAmount + '! Bonyeza kiungo changu upate nafasi yako: ' + link)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-green-500 text-white px-4 py-2 rounded-lg flex-1 text-center hover:bg-green-600 transition"
+            >
+              WhatsApp
+            </a>
+            <a
+              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg flex-1 text-center hover:bg-blue-600 transition"
+            >
+              Facebook
+            </a>
+          </div>
           
           {/* Ad Between Share Buttons and Progress */}
           {process.env.NODE_ENV === 'production' && (
@@ -294,7 +287,7 @@ export default function SharePage() {
             </div>
           )}
           
-          {/* Progress Section */}
+          {/* Progress Section - Shows 3/3 after 1 click */}
           <div className="bg-gray-100 rounded-lg p-4 mb-6">
             <div className="flex justify-between items-center mb-2">
               <p className="font-medium text-gray-700">Vibonyezo vya Kipekee</p>
@@ -318,7 +311,7 @@ export default function SharePage() {
             )}
           </div>
 
-          {/* Claim Button */}
+          {/* Claim Button - Unlocks at 1 click */}
           <button
             onClick={checkShares}
             disabled={claiming || !isUnlocked || (poolInfo?.remainingVouchers === 0)}
