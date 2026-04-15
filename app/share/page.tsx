@@ -18,6 +18,7 @@ export default function SharePage() {
   const [error, setError] = useState('');
   const [showPopup, setShowPopup] = useState(true);
   const [hasClosedPopup, setHasClosedPopup] = useState(false);
+  const [displayClicks, setDisplayClicks] = useState(0);
 
   useEffect(() => {
     // Get share link and user info
@@ -27,7 +28,11 @@ export default function SharePage() {
       axios.get('/api/admin/vouchers')
     ]).then(([shareRes, userRes, vouchersRes]) => {
       setLink(shareRes.data.link);
-      setClicks(shareRes.data.clickCount);
+      const actualClicks = shareRes.data.clickCount;
+      setClicks(actualClicks);
+      // Display clicks: if actual >= 1, show 3/3, otherwise show actual
+      setDisplayClicks(actualClicks >= 1 ? 3 : actualClicks);
+      
       const amount = userRes.data.currentVoucherAmount;
       setPotentialAmount(amount);
       setStreakInfo({
@@ -83,6 +88,23 @@ export default function SharePage() {
     localStorage.setItem('sharePagePopupClosed', 'true');
   };
 
+  // Refresh clicks periodically
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await axios.get('/api/share-link');
+        const actualClicks = res.data.clickCount;
+        setClicks(actualClicks);
+        // Display clicks: if actual >= 1, show 3/3, otherwise show actual
+        setDisplayClicks(actualClicks >= 1 ? 3 : actualClicks);
+      } catch (err) {
+        console.error('Failed to refresh clicks:', err);
+      }
+    }, 3000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     const popupClosed = localStorage.getItem('sharePagePopupClosed');
     if (popupClosed === 'true') {
@@ -96,6 +118,11 @@ export default function SharePage() {
       <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white"></div>
     </div>
   );
+
+  // Determine if button should be enabled (actual clicks >= 1)
+  const isUnlocked = clicks >= 1;
+  // Determine progress percentage (0%, 50%, or 100%)
+  const progressPercent = clicks >= 1 ? 100 : (displayClicks / 3) * 100;
 
   return (
     <>
@@ -260,16 +287,16 @@ export default function SharePage() {
             </div>
           )}
           
-          {/* Progress Section - Shows 3 clicks needed visually */}
+          {/* Progress Section - Shows 3/3 after 1 click */}
           <div className="bg-gray-100 rounded-lg p-4 mb-6">
             <div className="flex justify-between items-center mb-2">
               <p className="font-medium text-gray-700">Vibonyezo vya Kipekee</p>
-              <p className="text-lg font-bold text-blue-600">{clicks} / 3</p>
+              <p className="text-lg font-bold text-blue-600">{displayClicks} / 3</p>
             </div>
             <div className="w-full bg-gray-300 rounded-full h-3">
               <div 
                 className="bg-green-500 rounded-full h-3 transition-all duration-300"
-                style={{ width: `${Math.min(100, (clicks / 3) * 100)}%` }}
+                style={{ width: `${progressPercent}%` }}
               ></div>
             </div>
             {clicks < 1 && (
@@ -277,14 +304,9 @@ export default function SharePage() {
                 Unahitaji marafiki watatu kufungua (click moja inatosha)
               </p>
             )}
-            {clicks >= 1 && clicks < 3 && (
+            {clicks >= 1 && (
               <p className="text-xs text-green-600 mt-2 text-center font-semibold">
-                ✓ Tayari kudai! Bonyeza kitufe chini.
-              </p>
-            )}
-            {clicks >= 3 && (
-              <p className="text-xs text-green-600 mt-2 text-center font-semibold">
-                ✓ Tayari kudai! Bonyeza kitufe chini.
+                ✓ Umefanikiwa! Bonyeza kitufe chini kudai zawadi yako.
               </p>
             )}
           </div>
@@ -292,20 +314,20 @@ export default function SharePage() {
           {/* Claim Button - Unlocks at 1 click */}
           <button
             onClick={checkShares}
-            disabled={claiming || clicks < 1 || (poolInfo?.remainingVouchers === 0)}
+            disabled={claiming || !isUnlocked || (poolInfo?.remainingVouchers === 0)}
             className={`w-full py-3 rounded-lg font-semibold transition mb-3 ${
-              clicks >= 1 && poolInfo?.remainingVouchers !== 0
+              isUnlocked && poolInfo?.remainingVouchers !== 0
                 ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black hover:from-yellow-500 hover:to-orange-600 shadow-lg' 
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             } disabled:opacity-50`}
           >
             {claiming 
               ? 'Inachakata...' 
-              : clicks >= 1 
+              : isUnlocked 
                 ? poolInfo?.remainingVouchers === 0 
                   ? '❌ Zawadi Zimeisha - Jaribu Tena' 
                   : '🔓 Fungua Nafasi Yangu!' 
-                : '🔒 Unahitaji Mrafiki 1 Kufungua'}
+                : '🔒 Subiri Mrafiki 1 Afungue Kiungo'}
           </button>
 
           {/* Ad Between Claim Button and Footer */}
