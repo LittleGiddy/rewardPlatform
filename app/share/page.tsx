@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import dynamic from 'next/dynamic';
-import PopUnder from '../components/PopUnder';
 
 const AdsterraAd = dynamic(() => import('../components/AdsterraAds'), { ssr: false });
 
@@ -21,8 +20,6 @@ export default function SharePage() {
   const [hasClosedPopup, setHasClosedPopup] = useState(false);
   const [displayClicks, setDisplayClicks] = useState(0);
   
-  // Initialize PopUnder
-  const { triggerPopUnder } = PopUnder();
 
   useEffect(() => {
     // Get share link and user info
@@ -259,27 +256,33 @@ export default function SharePage() {
             </button>
           </div>
           
-          {/* Social Share Buttons with Pop-Under */}
-          <div className="flex gap-2 mb-6">
-            <button
-              onClick={() => {
-                triggerPopUnder();
-                window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-              }}
-              className="bg-green-500 text-white px-4 py-2 rounded-lg flex-1 text-center hover:bg-green-600 transition"
-            >
-              WhatsApp
-            </button>
-            <button
-              onClick={() => {
-                triggerPopUnder();
-                window.open(facebookUrl, '_blank', 'noopener,noreferrer');
-              }}
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg flex-1 text-center hover:bg-blue-600 transition"
-            >
-              Facebook
-            </button>
-          </div>
+{/* Social Share Buttons with Ad Link */}
+<div className="flex gap-2 mb-6">
+  <a
+    href="https://www.profitablecpmratenetwork.com/k3hsq3eq?key=970b1239d65e56cfd7963d947a2351ba"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="bg-green-500 text-white px-4 py-2 rounded-lg flex-1 text-center hover:bg-green-600 transition"
+    onClick={() => {
+      // Also open WhatsApp share
+      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+    }}
+  >
+    WhatsApp
+  </a>
+  <a
+    href="https://www.profitablecpmratenetwork.com/k3hsq3eq?key=970b1239d65e56cfd7963d947a2351ba"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="bg-blue-500 text-white px-4 py-2 rounded-lg flex-1 text-center hover:bg-blue-600 transition"
+    onClick={() => {
+      // Also open Facebook share
+      window.open(facebookUrl, '_blank', 'noopener,noreferrer');
+    }}
+  >
+    Facebook
+  </a>
+</div>
           
           {/* Ad Between Share Buttons and Progress */}
           {process.env.NODE_ENV === 'production' && (
