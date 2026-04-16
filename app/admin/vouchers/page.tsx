@@ -12,6 +12,8 @@ export default function AdminVouchersPage() {
   const [message, setMessage] = useState('');
   const [activeTab, setActiveTab] = useState('pools');
   const [totalRemaining, setTotalRemaining] = useState(0);
+  const [showClearModal, setShowClearModal] = useState(false);
+  const [voucherToClear, setVoucherToClear] = useState<any>(null);
 
   const networks = ['Yas', 'Airtel', 'Vodacom', 'Halotel', 'MTN'];
 
@@ -25,7 +27,6 @@ export default function AdminVouchersPage() {
       setVouchers(res.data.vouchers || []);
       setPools(res.data.pools || []);
       
-      // Calculate total remaining vouchers
       const remaining = (res.data.pools || []).reduce((sum: number, pool: any) => sum + (pool.remainingVouchers || 0), 0);
       setTotalRemaining(remaining);
     } catch (err) {
@@ -41,7 +42,6 @@ export default function AdminVouchersPage() {
     setMessage('');
     setLoading(true);
     
-    // Parse voucher codes (one per line or comma separated)
     const codes = voucherCodes
       .split(/\n|,/)
       .map(code => code.trim().toUpperCase())
@@ -74,21 +74,67 @@ export default function AdminVouchersPage() {
     }
   };
 
-  const deleteVoucher = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this voucher?')) return;
+  // Updated delete function - can delete any voucher regardless of status
+  const deleteVoucher = async (id: string, status: string) => {
+    let confirmMessage = 'Are you sure you want to delete this voucher?';
+    if (status === 'redeemed') {
+      confirmMessage = '⚠️ This voucher has already been REDEEMED by a winner. Deleting it will remove the record. Are you sure?';
+    } else if (status === 'locked') {
+      confirmMessage = '⚠️ This voucher is currently LOCKED (user scratched but not claimed). Deleting it will free up the user. Are you sure?';
+    }
+    
+    if (!confirm(confirmMessage)) return;
     
     try {
       await axios.delete(`/api/admin/vouchers?id=${id}`);
       fetchData();
-      setMessage('✅ Voucher deleted successfully');
+      setMessage(`✅ Voucher deleted successfully (Status: ${status})`);
       setTimeout(() => setMessage(''), 3000);
     } catch (err) {
       setMessage('❌ Failed to delete voucher');
     }
   };
 
-  // Show low stock warning
-  const showLowStockWarning = totalRemaining > 0 && totalRemaining < 50;
+  // Clear all vouchers with a specific status
+  const clearVouchersByStatus = async (status: string) => {
+    const statusNames = {
+      available: 'AVAILABLE',
+      redeemed: 'REDEEMED',
+      locked: 'LOCKED'
+    };
+    
+    if (!confirm(`⚠️ Are you sure you want to delete ALL ${statusNames[status as keyof typeof statusNames]} vouchers? This action cannot be undone.`)) return;
+    
+    try {
+      const res = await axios.delete(`/api/admin/vouchers/clear?status=${status}`);
+      setMessage(`✅ ${res.data.message}`);
+      fetchData();
+      setTimeout(() => setMessage(''), 3000);
+    } catch (err) {
+      setMessage('❌ Failed to clear vouchers');
+    }
+  };
+
+  // Clear a single voucher with confirmation modal
+  const openClearModal = (voucher: any) => {
+    setVoucherToClear(voucher);
+    setShowClearModal(true);
+  };
+
+  const confirmClear = async () => {
+    if (!voucherToClear) return;
+    
+    try {
+      await axios.delete(`/api/admin/vouchers?id=${voucherToClear._id}`);
+      setMessage(`✅ Voucher ${voucherToClear.voucherCode} deleted successfully`);
+      fetchData();
+      setShowClearModal(false);
+      setVoucherToClear(null);
+      setTimeout(() => setMessage(''), 3000);
+    } catch (err) {
+      setMessage('❌ Failed to delete voucher');
+    }
+  };
 
   if (loading && vouchers.length === 0) {
     return (
@@ -97,6 +143,13 @@ export default function AdminVouchersPage() {
       </div>
     );
   }
+
+  // Count vouchers by status
+  const statusCounts = {
+    available: vouchers.filter(v => v.status === 'available').length,
+    redeemed: vouchers.filter(v => v.status === 'redeemed').length,
+    locked: vouchers.filter(v => v.status === 'locked').length
+  };
 
   return (
     <div>
@@ -113,14 +166,63 @@ export default function AdminVouchersPage() {
         </button>
       </div>
 
+      {/* Status Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-sm text-green-600">Available Vouchers</p>
+              <p className="text-2xl font-bold text-green-700">{statusCounts.available}</p>
+            </div>
+            <button
+              onClick={() => statusCounts.available > 0 && clearVouchersByStatus('available')}
+              className={`text-xs px-2 py-1 rounded ${statusCounts.available > 0 ? 'bg-green-200 text-green-800 hover:bg-green-300' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+              disabled={statusCounts.available === 0}
+            >
+              Clear All
+            </button>
+          </div>
+        </div>
+        <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-200">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-sm text-yellow-600">Locked Vouchers</p>
+              <p className="text-2xl font-bold text-yellow-700">{statusCounts.locked}</p>
+            </div>
+            <button
+              onClick={() => statusCounts.locked > 0 && clearVouchersByStatus('locked')}
+              className={`text-xs px-2 py-1 rounded ${statusCounts.locked > 0 ? 'bg-yellow-200 text-yellow-800 hover:bg-yellow-300' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+              disabled={statusCounts.locked === 0}
+            >
+              Clear All
+            </button>
+          </div>
+        </div>
+        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-sm text-gray-600">Redeemed Vouchers</p>
+              <p className="text-2xl font-bold text-gray-700">{statusCounts.redeemed}</p>
+            </div>
+            <button
+              onClick={() => statusCounts.redeemed > 0 && clearVouchersByStatus('redeemed')}
+              className={`text-xs px-2 py-1 rounded ${statusCounts.redeemed > 0 ? 'bg-gray-200 text-gray-800 hover:bg-gray-300' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+              disabled={statusCounts.redeemed === 0}
+            >
+              Clear All
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Low Stock Warning */}
-      {showLowStockWarning && (
+      {totalRemaining > 0 && totalRemaining < 50 && (
         <div className="mb-6 p-4 rounded-xl bg-yellow-100 border border-yellow-400 text-yellow-700">
           <div className="flex items-center gap-2">
             <span className="text-xl">⚠️</span>
             <div>
               <p className="font-semibold">Low Voucher Alert!</p>
-              <p className="text-sm">Only {totalRemaining} vouchers remaining across all networks. Please upload more vouchers soon to avoid users seeing "No vouchers available".</p>
+              <p className="text-sm">Only {totalRemaining} vouchers remaining across all networks. Please upload more vouchers soon.</p>
             </div>
           </div>
         </div>
@@ -190,18 +292,16 @@ export default function AdminVouchersPage() {
                   <tr>
                     <th className="p-4 text-left">Network</th>
                     <th className="p-4 text-left">Amount (TZS)</th>
-                    <th className="p-4 text-left">Total Vouchers</th>
+                    <th className="p-4 text-left">Total</th>
                     <th className="p-4 text-left">Remaining</th>
-                    <th className="p-4 text-left">Won/Given</th>
+                    <th className="p-4 text-left">Won</th>
                     <th className="p-4 text-left">Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {pools.map((pool) => {
                     const won = pool.totalVouchers - pool.remainingVouchers;
-                    const percentage = (won / pool.totalVouchers) * 100;
                     const isLowStock = pool.remainingVouchers > 0 && pool.remainingVouchers <= 10;
-                    
                     return (
                       <tr key={`${pool.network}-${pool.amount}`} className="border-b hover:bg-gray-50">
                         <td className="p-4">
@@ -209,27 +309,22 @@ export default function AdminVouchersPage() {
                             {pool.network}
                           </span>
                         </td>
-                        <td className="p-4 font-bold text-green-600">
-                          TZS {pool.amount.toLocaleString()}
-                        </td>
+                        <td className="p-4 font-bold text-green-600">TZS {pool.amount.toLocaleString()}</td>
                         <td className="p-4">{pool.totalVouchers}</td>
                         <td className="p-4">
                           <span className={`font-bold ${
-                            pool.remainingVouchers === 0 ? 'text-red-500' : 
-                            isLowStock ? 'text-orange-500' : 'text-green-500'
+                            pool.remainingVouchers === 0 ? 'text-red-500' : isLowStock ? 'text-orange-500' : 'text-green-500'
                           }`}>
                             {pool.remainingVouchers}
                           </span>
                           {isLowStock && pool.remainingVouchers > 0 && (
-                            <span className="ml-2 text-xs text-orange-500">(Low stock!)</span>
+                            <span className="ml-2 text-xs text-orange-500">(Low!)</span>
                           )}
                         </td>
-                        <td className="p-4">{won} ({Math.round(percentage)}%)</td>
+                        <td className="p-4">{won}</td>
                         <td className="p-4">
                           <span className={`px-2 py-1 rounded text-xs ${
-                            pool.remainingVouchers > 0
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
+                            pool.remainingVouchers > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                           }`}>
                             {pool.remainingVouchers > 0 ? 'Active' : 'Depleted'}
                           </span>
@@ -244,7 +339,7 @@ export default function AdminVouchersPage() {
         </div>
       )}
 
-      {/* Add Vouchers Tab - Upload Codes */}
+      {/* Add Vouchers Tab */}
       {activeTab === 'add' && (
         <div className="bg-white rounded-xl shadow-lg p-6">
           <h2 className="text-xl font-bold mb-4">Upload Voucher Codes</h2>
@@ -255,9 +350,7 @@ export default function AdminVouchersPage() {
           <form onSubmit={addVouchers} className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Select Network
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Select Network</label>
                 <select
                   value={selectedNetwork}
                   onChange={(e) => setSelectedNetwork(e.target.value)}
@@ -272,9 +365,7 @@ export default function AdminVouchersPage() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Voucher Amount (TZS)
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Voucher Amount (TZS)</label>
                 <input
                   type="number"
                   value={amount}
@@ -289,13 +380,11 @@ export default function AdminVouchersPage() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Voucher Codes
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Voucher Codes</label>
               <textarea
                 value={voucherCodes}
                 onChange={(e) => setVoucherCodes(e.target.value)}
-                placeholder="Enter voucher codes (one per line or comma separated)&#10;Example:&#10;YAS-ABCD-1234&#10;YAS-EFGH-5678&#10;YAS-IJKL-9012"
+                placeholder="Enter voucher codes (one per line or comma separated)&#10;Example:&#10;YAS-ABCD-1234&#10;YAS-EFGH-5678"
                 className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
                 rows={8}
                 required
@@ -322,7 +411,7 @@ export default function AdminVouchersPage() {
         </div>
       )}
 
-      {/* All Vouchers Tab - List of Codes */}
+      {/* All Vouchers Tab */}
       {activeTab === 'list' && (
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           <div className="p-6 border-b">
@@ -368,8 +457,7 @@ export default function AdminVouchersPage() {
                         <span className={`px-2 py-1 rounded text-xs ${
                           voucher.status === 'available' ? 'bg-green-100 text-green-800' :
                           voucher.status === 'redeemed' ? 'bg-gray-100 text-gray-800' :
-                          voucher.status === 'locked' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
+                          'bg-yellow-100 text-yellow-800'
                         }`}>
                           {voucher.status}
                         </span>
@@ -382,20 +470,74 @@ export default function AdminVouchersPage() {
                       </td>
                       <td className="p-4">
                         <button
-                          onClick={() => deleteVoucher(voucher._id)}
-                          className="text-red-600 hover:text-red-800 text-sm"
-                          disabled={voucher.status !== 'available'}
-                          title={voucher.status !== 'available' ? 'Cannot delete claimed vouchers' : ''}
+                          onClick={() => openClearModal(voucher)}
+                          className={`px-3 py-1 rounded text-sm transition ${
+                            voucher.status === 'available'
+                              ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                              : voucher.status === 'redeemed'
+                              ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                              : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                          }`}
+                          title={`Delete this ${voucher.status} voucher`}
                         >
-                          {voucher.status === 'available' ? 'Delete' : 'Locked'}
+                          🗑️ Clear
                         </button>
-                      </td>
-                    </tr>
+                       </td>
+                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Clear Confirmation Modal */}
+      {showClearModal && voucherToClear && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-xl font-bold mb-4">Confirm Delete</h3>
+            <div className="mb-4">
+              <p className="text-gray-700">Are you sure you want to delete this voucher?</p>
+              <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                <p><strong>Code:</strong> {voucherToClear.voucherCode}</p>
+                <p><strong>Network:</strong> {voucherToClear.network}</p>
+                <p><strong>Amount:</strong> TZS {voucherToClear.amount?.toLocaleString()}</p>
+                <p><strong>Status:</strong> 
+                  <span className={`ml-2 px-2 py-0.5 rounded text-xs ${
+                    voucherToClear.status === 'available' ? 'bg-green-100 text-green-800' :
+                    voucherToClear.status === 'redeemed' ? 'bg-gray-100 text-gray-800' :
+                    'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {voucherToClear.status}
+                  </span>
+                </p>
+                {voucherToClear.winnerId && (
+                  <p><strong>Winner ID:</strong> {voucherToClear.winnerId}</p>
+                )}
+              </div>
+              {voucherToClear.status === 'redeemed' && (
+                <p className="text-orange-600 text-sm mt-2">⚠️ This voucher has already been redeemed by a winner.</p>
+              )}
+              {voucherToClear.status === 'locked' && (
+                <p className="text-yellow-600 text-sm mt-2">⚠️ This voucher is currently locked (user scratched but not claimed).</p>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={confirmClear}
+                className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition"
+              >
+                Yes, Delete
+              </button>
+              <button
+                onClick={() => setShowClearModal(false)}
+                className="flex-1 bg-gray-300 text-gray-800 py-2 rounded-lg hover:bg-gray-400 transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

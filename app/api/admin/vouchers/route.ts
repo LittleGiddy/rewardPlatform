@@ -79,18 +79,32 @@ export async function POST(req: NextRequest) {
   });
 }
 
-// DELETE - Remove voucher
+// In the DELETE function, remove the status check
 export async function DELETE(req: NextRequest) {
   await dbConnect();
   
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
-  const code = searchParams.get('code');
+  const status = searchParams.get('status');
+  
+  // Clear all vouchers by status (new feature)
+  if (status && ['available', 'redeemed', 'locked'].includes(status)) {
+    const result = await Voucher.deleteMany({ status });
+    return NextResponse.json({ 
+      success: true, 
+      message: `Deleted ${result.deletedCount} ${status} vouchers` 
+    });
+  }
   
   if (id) {
+    // Allow deleting ANY voucher regardless of status
     const voucher = await Voucher.findById(id);
-    if (voucher && voucher.status === 'available') {
-      // Update pool
+    if (!voucher) {
+      return NextResponse.json({ error: 'Voucher not found' }, { status: 404 });
+    }
+    
+    // Update pool if voucher was available
+    if (voucher.status === 'available') {
       const pool = await VoucherPool.findOne({ 
         network: voucher.network, 
         amount: voucher.amount 
@@ -100,27 +114,11 @@ export async function DELETE(req: NextRequest) {
         pool.remainingVouchers -= 1;
         await pool.save();
       }
-      await Voucher.findByIdAndDelete(id);
     }
+    
+    await Voucher.findByIdAndDelete(id);
     return NextResponse.json({ success: true, message: 'Voucher deleted' });
   }
   
-  if (code) {
-    const voucher = await Voucher.findOne({ voucherCode: code.toUpperCase() });
-    if (voucher && voucher.status === 'available') {
-      const pool = await VoucherPool.findOne({ 
-        network: voucher.network, 
-        amount: voucher.amount 
-      });
-      if (pool) {
-        pool.totalVouchers -= 1;
-        pool.remainingVouchers -= 1;
-        await pool.save();
-      }
-      await Voucher.findOneAndDelete({ voucherCode: code.toUpperCase() });
-    }
-    return NextResponse.json({ success: true, message: 'Voucher deleted' });
-  }
-  
-  return NextResponse.json({ error: 'No ID or code provided' }, { status: 400 });
+  return NextResponse.json({ error: 'No ID or status provided' }, { status: 400 });
 }
