@@ -1,7 +1,16 @@
 'use client';
 import Script from 'next/script';
+import { usePathname } from 'next/navigation';
 
 export default function PopunderScript() {
+  const pathname = usePathname();
+  
+  // Check if current route is admin
+  const isAdminRoute = pathname?.startsWith('/admin');
+  
+  // Don't load on admin routes
+  if (isAdminRoute) return null;
+  
   // Only run in production (not during local development)
   if (process.env.NODE_ENV !== 'production') {
     return null;

@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 
 interface AdsterraAdProps {
   adCode: string;
@@ -9,8 +10,15 @@ interface AdsterraAdProps {
 export default function AdsterraAd({ adCode, className = '' }: AdsterraAdProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const isLoaded = useRef(false);
+  const pathname = usePathname();
+  
+  // Check if current route is admin
+  const isAdminRoute = pathname?.startsWith('/admin');
 
   useEffect(() => {
+    // Don't load ads on admin routes
+    if (isAdminRoute) return;
+    
     // Only run in production and if not already loaded
     if (process.env.NODE_ENV !== 'production') return;
     if (isLoaded.current) return;
@@ -49,7 +57,10 @@ export default function AdsterraAd({ adCode, className = '' }: AdsterraAdProps) 
     });
     
     isLoaded.current = true;
-  }, [adCode]);
+  }, [adCode, isAdminRoute]);
+
+  // Don't render anything on admin routes
+  if (isAdminRoute) return null;
 
   return (
     <div className={`adsterra-container ${className}`}>
