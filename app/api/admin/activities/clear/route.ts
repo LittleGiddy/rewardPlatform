@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Winner from '@/models/Winner';
 import ScratchEvent from '@/models/ScratchEvent';
-import User from '@/models/User';
 
 export async function DELETE(req: NextRequest) {
   await dbConnect();
@@ -11,6 +10,7 @@ export async function DELETE(req: NextRequest) {
   const olderThanDays = searchParams.get('olderThanDays');
   
   let deletedCount = 0;
+  let message = '';
   
   if (olderThanDays) {
     const date = new Date();
@@ -24,18 +24,18 @@ export async function DELETE(req: NextRequest) {
     const eventsResult = await ScratchEvent.deleteMany({ timestamp: { $lt: date } });
     deletedCount += eventsResult.deletedCount || 0;
     
-    return NextResponse.json({ 
-      success: true, 
-      message: `Deleted ${deletedCount} old records (older than ${olderThanDays} days)`,
-      deletedCount
-    });
+    message = `Deleted ${deletedCount} activities older than ${olderThanDays} days`;
+  } else {
+    // Delete all activities (winners and scratch events)
+    const winnersResult = await Winner.deleteMany({});
+    const eventsResult = await ScratchEvent.deleteMany({});
+    deletedCount = (winnersResult.deletedCount || 0) + (eventsResult.deletedCount || 0);
+    message = `Deleted ${deletedCount} activities`;
   }
   
-  // For clearing all activities (you may want to be more selective)
-  // This is just for demonstration - adjust based on your needs
   return NextResponse.json({ 
     success: true, 
-    message: 'Clear functionality configured',
-    deletedCount: 0
+    message,
+    deletedCount
   });
 }

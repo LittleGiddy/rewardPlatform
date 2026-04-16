@@ -8,7 +8,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [showClearModal, setShowClearModal] = useState(false);
-  const [clearType, setClearType] = useState<'activities' | 'scratchEvents' | 'all' | 'old'>('activities');
+  const [clearType, setClearType] = useState<'activities' | 'old' | 'all'>('activities');
   const [clearDays, setClearDays] = useState(7);
 
   const fetchDashboardData = useCallback(async () => {
@@ -28,12 +28,12 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchDashboardData();
-    const interval = setInterval(fetchDashboardData, 30000); // Refresh every 30 seconds
+    const interval = setInterval(fetchDashboardData, 30000);
     return () => clearInterval(interval);
   }, [fetchDashboardData]);
 
-  // Clear activities
-  const clearActivities = async () => {
+  // Clear recent activities
+  const clearRecentActivities = async () => {
     try {
       const res = await axios.delete('/api/admin/activities/clear');
       setMessage(`✅ ${res.data.message}`);
@@ -41,19 +41,6 @@ export default function AdminDashboard() {
       setTimeout(() => setMessage(''), 3000);
     } catch (err) {
       setMessage('❌ Failed to clear activities');
-      setTimeout(() => setMessage(''), 3000);
-    }
-  };
-
-  // Clear scratch events
-  const clearScratchEvents = async () => {
-    try {
-      const res = await axios.delete('/api/admin/scratch-events/clear');
-      setMessage(`✅ ${res.data.message}`);
-      await fetchDashboardData();
-      setTimeout(() => setMessage(''), 3000);
-    } catch (err) {
-      setMessage('❌ Failed to clear scratch events');
       setTimeout(() => setMessage(''), 3000);
     }
   };
@@ -71,30 +58,12 @@ export default function AdminDashboard() {
     }
   };
 
-  // Clear all data (scratch events + activities)
-  const clearAllData = async () => {
-    try {
-      await axios.delete('/api/admin/scratch-events/clear');
-      await axios.delete('/api/admin/activities/clear');
-      setMessage(`✅ All activities and scratch events cleared successfully`);
-      await fetchDashboardData();
-      setTimeout(() => setMessage(''), 3000);
-    } catch (err) {
-      setMessage('❌ Failed to clear data');
-      setTimeout(() => setMessage(''), 3000);
-    }
-  };
-
   const handleClearConfirm = () => {
     setShowClearModal(false);
     if (clearType === 'activities') {
-      clearActivities();
-    } else if (clearType === 'scratchEvents') {
-      clearScratchEvents();
+      clearRecentActivities();
     } else if (clearType === 'old') {
       clearOldActivities(clearDays);
-    } else if (clearType === 'all') {
-      clearAllData();
     }
   };
 
@@ -142,13 +111,13 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => {
-              setClearType('all');
+              setClearType('activities');
               setShowClearModal(true);
             }}
             className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition flex items-center gap-2"
           >
             <span>⚠️</span>
-            <span>Clear All Data</span>
+            <span>Clear All Activities</span>
           </button>
         </div>
       </div>
@@ -168,87 +137,30 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* Clear Options Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-lg">Clear Activities</h3>
-            <span className="text-2xl">📋</span>
-          </div>
-          <p className="text-gray-500 text-sm mb-4">Remove all activity logs from the dashboard</p>
-          <button
-            onClick={() => {
-              setClearType('activities');
-              setShowClearModal(true);
-            }}
-            className="w-full bg-yellow-500 text-white py-2 rounded-lg hover:bg-yellow-600 transition"
-          >
-            Clear Activities
-          </button>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-orange-500">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-lg">Clear Scratch Events</h3>
-            <span className="text-2xl">🎰</span>
-          </div>
-          <p className="text-gray-500 text-sm mb-4">Remove all scratch event records from the database</p>
-          <button
-            onClick={() => {
-              setClearType('scratchEvents');
-              setShowClearModal(true);
-            }}
-            className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition"
-          >
-            Clear Scratch Events
-          </button>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-lg">Clear Old Data</h3>
-            <span className="text-2xl">📅</span>
-          </div>
-          <p className="text-gray-500 text-sm mb-4">Remove activities older than selected days</p>
+      {/* Recent Activities */}
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-gray-800">Recent Activities</h2>
           <div className="flex gap-2">
-            <select
-              value={clearDays}
-              onChange={(e) => setClearDays(parseInt(e.target.value))}
-              className="flex-1 border rounded-lg px-3 py-2 text-sm"
-            >
-              <option value={1}>1 day</option>
-              <option value={3}>3 days</option>
-              <option value={7}>7 days</option>
-              <option value={14}>14 days</option>
-              <option value={30}>30 days</option>
-              <option value={60}>60 days</option>
-            </select>
             <button
               onClick={() => {
                 setClearType('old');
                 setShowClearModal(true);
               }}
-              className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
+              className="text-sm text-yellow-600 hover:text-yellow-800 transition px-3 py-1 rounded border border-yellow-300"
             >
-              Clear
+              Clear Old
+            </button>
+            <button
+              onClick={() => {
+                setClearType('activities');
+                setShowClearModal(true);
+              }}
+              className="text-sm text-red-600 hover:text-red-800 transition px-3 py-1 rounded border border-red-300"
+            >
+              Clear All
             </button>
           </div>
-        </div>
-      </div>
-
-      {/* Recent Activities */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800">Recent Activities</h2>
-          <button
-            onClick={() => {
-              setClearType('activities');
-              setShowClearModal(true);
-            }}
-            className="text-sm text-red-600 hover:text-red-800 transition"
-          >
-            Clear All
-          </button>
         </div>
         <div className="space-y-3">
           {recentActivities.length === 0 ? (
@@ -281,18 +193,23 @@ export default function AdminDashboard() {
             <h3 className="text-xl font-bold mb-4">Confirm Clear</h3>
             <div className="mb-4">
               <p className="text-gray-700 mb-2">
-                {clearType === 'activities' && 'Are you sure you want to clear ALL activity logs? This action cannot be undone.'}
-                {clearType === 'scratchEvents' && 'Are you sure you want to clear ALL scratch events? This action cannot be undone.'}
+                {clearType === 'activities' && 'Are you sure you want to clear ALL recent activities? This action cannot be undone.'}
                 {clearType === 'old' && `Are you sure you want to clear activities older than ${clearDays} days? This action cannot be undone.`}
-                {clearType === 'all' && '⚠️ DANGER: Are you sure you want to clear ALL activities AND scratch events? This action cannot be undone.'}
               </p>
-              {clearType === 'all' && (
-                <div className="mt-3 p-3 bg-red-50 rounded-lg border border-red-200">
-                  <p className="text-red-700 text-sm font-semibold">This will permanently delete:</p>
-                  <ul className="list-disc list-inside text-sm text-red-600 mt-1">
-                    <li>All activity logs</li>
-                    <li>All scratch events</li>
-                  </ul>
+              {clearType === 'old' && (
+                <div className="mt-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Days to keep</label>
+                  <select
+                    value={clearDays}
+                    onChange={(e) => setClearDays(parseInt(e.target.value))}
+                    className="w-full border rounded-lg px-3 py-2"
+                  >
+                    <option value={1}>Keep only last 1 day</option>
+                    <option value={3}>Keep only last 3 days</option>
+                    <option value={7}>Keep only last 7 days</option>
+                    <option value={14}>Keep only last 14 days</option>
+                    <option value={30}>Keep only last 30 days</option>
+                  </select>
                 </div>
               )}
             </div>
