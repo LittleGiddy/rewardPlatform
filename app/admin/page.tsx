@@ -32,18 +32,22 @@ export default function AdminDashboard() {
     return () => clearInterval(interval);
   }, [fetchDashboardData]);
 
-  // Clear recent activities
-  const clearRecentActivities = async () => {
-    try {
-      const res = await axios.delete('/api/admin/activities/clear');
-      setMessage(`✅ ${res.data.message}`);
-      await fetchDashboardData();
-      setTimeout(() => setMessage(''), 3000);
-    } catch (err) {
-      setMessage('❌ Failed to clear activities');
-      setTimeout(() => setMessage(''), 3000);
-    }
-  };
+const clearRecentActivities = async () => {
+  setLoading(true);
+  try {
+    const res = await axios.delete('/api/admin/activities/clear');
+    console.log('Clear response:', res.data);
+    setMessage(`✅ ${res.data.message}`);
+    await fetchDashboardData();
+    setTimeout(() => setMessage(''), 3000);
+  } catch (err: any) {
+    console.error('Clear error:', err.response?.data || err.message);
+    setMessage(`❌ Failed to clear activities: ${err.response?.data?.message || err.message}`);
+    setTimeout(() => setMessage(''), 3000);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Clear old activities
   const clearOldActivities = async (days: number) => {
