@@ -107,10 +107,24 @@ export async function GET(req: NextRequest) {
       remaining: p.remainingVouchers
     })));
 
+    // ✅ IMPROVED: Better handling when no vouchers available
     if (availablePools.length === 0) {
       console.log('[SCRATCH] No vouchers available for network:', user.network);
+      
+      // Get all available networks to help user
+      const allAvailablePools = await VoucherPool.find({
+        remainingVouchers: { $gt: 0 }
+      });
+      const availableNetworks = [...new Set(allAvailablePools.map(p => p.network))];
+      
       return NextResponse.json({ 
-        error: `No vouchers available for ${user.network} network. Please try another network or come back later.` 
+        error: 'NO_VOUCHERS_AVAILABLE',
+        message: `No vouchers available for ${user.network} network at this time.`,
+        network: user.network,
+        availableNetworks: availableNetworks,
+        suggestion: availableNetworks.length > 0 
+          ? `Try switching to ${availableNetworks.join(', ')} network` 
+          : 'Please check back later. New vouchers will be added soon!'
       }, { status: 404 });
     }
 

@@ -11,6 +11,7 @@ export default function AdminVouchersPage() {
   const [voucherCodes, setVoucherCodes] = useState('');
   const [message, setMessage] = useState('');
   const [activeTab, setActiveTab] = useState('pools');
+  const [totalRemaining, setTotalRemaining] = useState(0);
 
   const networks = ['Yas', 'Airtel', 'Vodacom', 'Halotel', 'MTN'];
 
@@ -23,6 +24,10 @@ export default function AdminVouchersPage() {
       const res = await axios.get('/api/admin/vouchers');
       setVouchers(res.data.vouchers || []);
       setPools(res.data.pools || []);
+      
+      // Calculate total remaining vouchers
+      const remaining = (res.data.pools || []).reduce((sum: number, pool: any) => sum + (pool.remainingVouchers || 0), 0);
+      setTotalRemaining(remaining);
     } catch (err) {
       console.error('Failed to fetch data:', err);
       setMessage('❌ Failed to load vouchers');
@@ -82,6 +87,9 @@ export default function AdminVouchersPage() {
     }
   };
 
+  // Show low stock warning
+  const showLowStockWarning = totalRemaining > 0 && totalRemaining < 50;
+
   if (loading && vouchers.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -104,6 +112,19 @@ export default function AdminVouchersPage() {
           Refresh
         </button>
       </div>
+
+      {/* Low Stock Warning */}
+      {showLowStockWarning && (
+        <div className="mb-6 p-4 rounded-xl bg-yellow-100 border border-yellow-400 text-yellow-700">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">⚠️</span>
+            <div>
+              <p className="font-semibold">Low Voucher Alert!</p>
+              <p className="text-sm">Only {totalRemaining} vouchers remaining across all networks. Please upload more vouchers soon to avoid users seeing "No vouchers available".</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Message Alert */}
       {message && (
@@ -178,23 +199,32 @@ export default function AdminVouchersPage() {
                 <tbody>
                   {pools.map((pool) => {
                     const won = pool.totalVouchers - pool.remainingVouchers;
+                    const percentage = (won / pool.totalVouchers) * 100;
+                    const isLowStock = pool.remainingVouchers > 0 && pool.remainingVouchers <= 10;
+                    
                     return (
                       <tr key={`${pool.network}-${pool.amount}`} className="border-b hover:bg-gray-50">
                         <td className="p-4">
                           <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
                             {pool.network}
                           </span>
-                         </td>
+                        </td>
                         <td className="p-4 font-bold text-green-600">
                           TZS {pool.amount.toLocaleString()}
                         </td>
                         <td className="p-4">{pool.totalVouchers}</td>
                         <td className="p-4">
-                          <span className={`font-bold ${pool.remainingVouchers === 0 ? 'text-red-500' : 'text-green-500'}`}>
+                          <span className={`font-bold ${
+                            pool.remainingVouchers === 0 ? 'text-red-500' : 
+                            isLowStock ? 'text-orange-500' : 'text-green-500'
+                          }`}>
                             {pool.remainingVouchers}
                           </span>
+                          {isLowStock && pool.remainingVouchers > 0 && (
+                            <span className="ml-2 text-xs text-orange-500">(Low stock!)</span>
+                          )}
                         </td>
-                        <td className="p-4">{won}</td>
+                        <td className="p-4">{won} ({Math.round(percentage)}%)</td>
                         <td className="p-4">
                           <span className={`px-2 py-1 rounded text-xs ${
                             pool.remainingVouchers > 0
