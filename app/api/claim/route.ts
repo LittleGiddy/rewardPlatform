@@ -6,10 +6,11 @@ import Winner from '@/models/Winner';
 import ShareLink from '@/models/ShareLink';
 import VoucherPool from '@/models/VoucherPool';
 import Counter from '@/models/Counter';
+import { sendWinnerNotification } from '@/lib/email';
 
 // Configuration
 const CLAIMS_PER_WINNER = 500; // Exactly 1 winner per 500 claims
-const WINNER_COOLDOWN_DAYS = 2; // User must wait 7 days after winning before can win again
+const WINNER_COOLDOWN_DAYS = 2; // User must wait 2 days after winning before can win again
 
 export async function POST(req: NextRequest) {
   await dbConnect();
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'No pending voucher found. Please scratch a card first.' }, { status: 400 });
   }
 
-  // ✅ MOVED: Declare tempVoucher here BEFORE using it
+  // Declare tempVoucher here BEFORE using it
   const tempVoucher = await Voucher.findById(user.currentVoucherId);
   if (!tempVoucher) {
     user.currentVoucherId = null;
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Voucher expired. Please scratch again.' }, { status: 400 });
   }
 
-  // ✅ NEW: Check winner cooldown (moved AFTER tempVoucher declaration)
+  // Check winner cooldown
   if (user.lastWinAt) {
     const daysSinceLastWin = (Date.now() - new Date(user.lastWinAt).getTime()) / (1000 * 60 * 60 * 24);
     if (daysSinceLastWin < WINNER_COOLDOWN_DAYS) {
@@ -120,7 +121,7 @@ export async function POST(req: NextRequest) {
       console.log(`[CLAIM] Pool updated: ${pool.remainingVouchers} remaining for TZS ${pool.amount}`);
     }
 
-    // Record winner
+    // Record winner in database
     await Winner.create({
       userId,
       voucherId: availableVoucher._id,
@@ -144,6 +145,26 @@ export async function POST(req: NextRequest) {
     await Voucher.findByIdAndDelete(tempVoucher._id);
 
     console.log(`[CLAIM] WINNER! Amount: ${tempVoucher.amount}, Code: ${availableVoucher.voucherCode}`);
+    
+    // ✅ SEND EMAIL NOTIFICATION (don't await to not block response)
+    // Send email in background - user doesn't need to wait for it
+    (async () => {
+      try {
+        await sendWinnerNotification({
+          userName: user.phone || 'User',
+          userPhone: user.phone,
+          userNetwork: user.network,
+          voucherAmount: tempVoucher.amount,
+          voucherCode: availableVoucher.voucherCode,
+          winnerId: user._id.toString(),
+          wonAt: new Date(),
+        });
+        console.log('[EMAIL] Winner notification sent successfully');
+      } catch (emailError) {
+        console.error('[EMAIL] Failed to send winner notification:', emailError);
+      }
+    })();
+    
     return NextResponse.json({ 
       winner: true, 
       amount: tempVoucher.amount,
