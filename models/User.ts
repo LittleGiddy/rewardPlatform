@@ -14,6 +14,7 @@ const UserSchema = new mongoose.Schema({
   consecutiveLosses: { type: Number, default: 0 }, // Track losses for streak bonus
   totalWins: { type: Number, default: 0 },
   totalAttempts: { type: Number, default: 0 },
+  lastWinAt: { type: Date, default: null }, // Add this field
 });
 
 export default mongoose.models.User || mongoose.model('User', UserSchema);

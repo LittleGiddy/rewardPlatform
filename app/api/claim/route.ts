@@ -5,12 +5,11 @@ import Voucher from '@/models/Voucher';
 import Winner from '@/models/Winner';
 import ShareLink from '@/models/ShareLink';
 import VoucherPool from '@/models/VoucherPool';
+import Counter from '@/models/Counter';
 
 // Configuration
-const WIN_CONFIG = {
-  BASE_WIN_PROBABILITY: 0.002, // 0.2% base chance (1 in 500)
-  STREAK_BONUS_ENABLED: true,
-};
+const CLAIMS_PER_WINNER = 500; // Exactly 1 winner per 500 claims
+const WINNER_COOLDOWN_DAYS = 2; // User must wait 7 days after winning before can win again
 
 export async function POST(req: NextRequest) {
   await dbConnect();
@@ -32,6 +31,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'No pending voucher found. Please scratch a card first.' }, { status: 400 });
   }
 
+  // ✅ MOVED: Declare tempVoucher here BEFORE using it
   const tempVoucher = await Voucher.findById(user.currentVoucherId);
   if (!tempVoucher) {
     user.currentVoucherId = null;
@@ -39,45 +39,50 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Voucher expired. Please scratch again.' }, { status: 400 });
   }
 
-  // Calculate win probability based on multiple factors
-  let winProbability = WIN_CONFIG.BASE_WIN_PROBABILITY;
-  
-  // Factor 1: Streak bonus
-  if (WIN_CONFIG.STREAK_BONUS_ENABLED && user.consecutiveLosses) {
-    const streakBonus = Math.min(5, user.consecutiveLosses) * 0.001;
-    winProbability += streakBonus;
-    console.log(`[CLAIM] Streak bonus: +${(streakBonus * 100).toFixed(2)}% (${user.consecutiveLosses} losses)`);
-  }
-  
-  // Factor 2: Time of day bonus (6 PM to 10 PM)
-  const hour = new Date().getHours();
-  const isPeakHour = hour >= 18 && hour <= 22;
-  if (isPeakHour) {
-    winProbability *= 1.2;
-    console.log('[CLAIM] Peak hour bonus applied');
-  }
-  
-  // Factor 3: Referral quality bonus
-  const shareLink = await ShareLink.findOne({ userId });
-  if (shareLink) {
-    const uniqueReferrals = new Set(shareLink.clicks.map((c: any) => c.ip)).size;
-    if (uniqueReferrals >= 5) {
-      winProbability *= 1.5;
-      console.log('[CLAIM] High referral bonus applied');
-    } else if (uniqueReferrals >= 3) {
-      winProbability *= 1.2;
-      console.log('[CLAIM] Referral bonus applied');
+  // ✅ NEW: Check winner cooldown (moved AFTER tempVoucher declaration)
+  if (user.lastWinAt) {
+    const daysSinceLastWin = (Date.now() - new Date(user.lastWinAt).getTime()) / (1000 * 60 * 60 * 24);
+    if (daysSinceLastWin < WINNER_COOLDOWN_DAYS) {
+      const daysRemaining = Math.ceil(WINNER_COOLDOWN_DAYS - daysSinceLastWin);
+      console.log(`[CLAIM] User on winner cooldown: ${daysRemaining} days remaining`);
+      
+      // Still allow them to play, but treat as loss without incrementing streak
+      tempVoucher.status = 'redeemed';
+      await tempVoucher.save();
+      user.currentVoucherId = null;
+      user.currentRevealedAmount = null;
+      await user.save();
+      
+      return NextResponse.json({ 
+        winner: false, 
+        cooldown: true,
+        message: `You can only win once every ${WINNER_COOLDOWN_DAYS} days. Try again in ${daysRemaining} days.`,
+        daysRemaining
+      });
     }
   }
+
+  // Get or create claim counter
+  let counter = await Counter.findOne({ name: 'claimCounter' });
+  if (!counter) {
+    counter = await Counter.create({ name: 'claimCounter', value: 0 });
+  }
+
+  // Increment counter
+  counter.value += 1;
+  await counter.save();
+
+  // Determine winner: exactly 1 winner per CLAIMS_PER_WINNER claims
+  const isWinner = counter.value % CLAIMS_PER_WINNER === 0;
   
-  // Cap probability at 5% max
-  winProbability = Math.min(0.05, winProbability);
-  
-  console.log(`[CLAIM] Final win probability: ${(winProbability * 100).toFixed(2)}%`);
-  
-  // Determine if user wins
-  const isWinner = Math.random() < winProbability;
-  
+  // Reset counter after winner (optional, keeps number small)
+  if (isWinner) {
+    counter.value = 0;
+    await counter.save();
+  }
+
+  console.log(`[CLAIM] Claim #${counter.value}, Winner: ${isWinner}`);
+
   if (isWinner) {
     // Find an available voucher from the pool for this network and amount
     const availableVoucher = await Voucher.findOne({
@@ -129,6 +134,10 @@ export async function POST(req: NextRequest) {
     user.consecutiveLosses = 0;
     user.currentVoucherId = null;
     user.currentRevealedAmount = null;
+    
+    // Set last win time and increment total wins
+    user.lastWinAt = new Date();
+    user.totalWins = (user.totalWins || 0) + 1;
     await user.save();
 
     // Delete the temporary locked voucher
@@ -138,8 +147,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ 
       winner: true, 
       amount: tempVoucher.amount,
-      voucherCode: availableVoucher.voucherCode,
-      probability: winProbability
+      voucherCode: availableVoucher.voucherCode
     });
   } else {
     // Not winner - increment loss streak
