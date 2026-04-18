@@ -136,11 +136,11 @@ export default function SharePage() {
             </div>
             <div className="p-6 text-center">
               <p className="text-gray-700 mb-4 leading-relaxed">
-                Hakikisha unarefresh ukurasa wako baada ya marafiki watatu kufungua kiungo chako.
+                Hakikisha unarefresh ukurasa wako baada ya RAFIKI MMOJA kufungua kiungo chako.
               </p>
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
                 <p className="text-sm text-yellow-800 flex items-center justify-center gap-2">
-                  <span>🔄</span> Refresh page after 3 friends click your link
+                  <span>🔄</span> Refresh page after 1 friend clicks your link
                 </p>
               </div>
               <button
@@ -301,7 +301,7 @@ export default function SharePage() {
             </div>
             {clicks < 1 && (
               <p className="text-xs text-gray-500 mt-2 text-center">
-                Unahitaji marafiki watatu kufungua (click moja inatosha)
+                Unahitaji RAFIKI MMOJA kufungua (click moja inatosha)
               </p>
             )}
             {clicks >= 1 && (
@@ -342,7 +342,7 @@ export default function SharePage() {
 
           {/* Footer Note */}
           <p className="text-xs text-gray-500 text-center mt-6">
-            Kila mtu ana nafasi ya kushinda vocha. Shiriki kwa marafiki watatu ili kupata nafasi zaidi ya kushinda!
+            Kila mtu ana nafasi ya kushinda vocha. Shiriki kwa RAFIKI MMOJA ili kupata nafasi zaidi ya kushinda!
           </p>
 
           {/* Bottom Banner (Mobile) */}

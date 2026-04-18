@@ -151,7 +151,7 @@ export default function ScratchPage() {
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <p className="text-sm text-yellow-800">
             💡 <strong>Cha Kufanya:</strong> Kwangua ili kuangalia vocha. 
-            Kisha share kwa marafiki watatu ili kufungua zawadi ya vocha
+            Kisha share kwa RAFIKI MMOJA ili kufungua zawadi ya vocha
           </p>
         </div>
       </div>
