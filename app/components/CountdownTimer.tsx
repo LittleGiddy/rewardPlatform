@@ -4,12 +4,12 @@ import { useState, useEffect } from 'react';
 interface Props {
   targetDate?: number;
   onComplete?: () => void;
+  className?: string; // 👈 add this
 }
 
-export default function CountdownTimer({ targetDate, onComplete }: Props) {
+export default function CountdownTimer({ targetDate, onComplete, className }: Props) {
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
-  // Initialize timeLeft after mount
   useEffect(() => {
     if (!targetDate || isNaN(targetDate)) {
       setTimeLeft(0);
@@ -18,7 +18,6 @@ export default function CountdownTimer({ targetDate, onComplete }: Props) {
     setTimeLeft(Math.max(0, targetDate - Date.now()));
   }, [targetDate]);
 
-  // Update every second
   useEffect(() => {
     if (timeLeft === null || timeLeft <= 0) return;
 
@@ -37,9 +36,8 @@ export default function CountdownTimer({ targetDate, onComplete }: Props) {
     return () => clearInterval(interval);
   }, [targetDate, timeLeft, onComplete]);
 
-  // Show placeholder while not ready
   if (timeLeft === null || isNaN(timeLeft)) {
-    return <span className="font-mono">--:--:--</span>;
+    return <span className={`font-mono ${className}`}>--:--:--</span>;
   }
 
   const hours = Math.floor(timeLeft / (1000 * 60 * 60));
@@ -47,7 +45,7 @@ export default function CountdownTimer({ targetDate, onComplete }: Props) {
   const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
 
   return (
-    <span className="font-mono">
+    <span className={`font-mono ${className}`}>
       {hours.toString().padStart(2, '0')}:
       {minutes.toString().padStart(2, '0')}:
       {seconds.toString().padStart(2, '0')}
