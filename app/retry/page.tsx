@@ -27,7 +27,7 @@ export default function RetryPage() {
   if (status.cooldown) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-yellow-100">
-        <h2 className="text-2xl font-bold mb-4">Bad luck! Try again in</h2>
+        <h2 className="text-2xl font-bold mb-4 text-black dark:text-black">Bad luck! Try again in</h2>
         <CountdownTimer targetDate={new Date().getTime() + status.remaining} onComplete={() => router.push('/scratch')} />
       </div>
     );
