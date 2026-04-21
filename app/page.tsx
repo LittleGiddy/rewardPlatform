@@ -129,7 +129,7 @@ export default function Home() {
                   Special Offer!
                 </h2>
                 <p className="text-sm mb-3 text-gray-600">
-                  You've been selected for an exclusive voucher
+                  Umechaguliwa na Little Giddy kushinda vocha
                 </p>
                 <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg p-3 mb-3">
                   <p className="text-white font-bold text-sm">🔥 Limited Time!</p>
