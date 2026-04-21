@@ -9,7 +9,8 @@ export default function SettingsPage() {
     streakBonusEnabled: true,
     dailyAttemptsLimit: 5,
     cooldownMinutes: 10,
-    shareRequired: 3
+    shareRequired: 3,
+    claimsPerWinner: 500,   // 👈 NEW FIELD
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -57,6 +58,7 @@ export default function SettingsPage() {
 
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Existing fields */}
             <div>
               <label className="block text-sm font-medium mb-1">Win Probability (%)</label>
               <input
@@ -108,6 +110,23 @@ export default function SettingsPage() {
                 onChange={(e) => setSettings({ ...settings, shareRequired: parseInt(e.target.value) })}
                 className="w-full border rounded-lg px-4 py-2"
               />
+            </div>
+            
+            {/* NEW: Claims Per Winner */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Claims Per Winner (global counter)</label>
+              <input
+                type="number"
+                value={settings.claimsPerWinner}
+                onChange={(e) => setSettings({ ...settings, claimsPerWinner: parseInt(e.target.value) })}
+                className="w-full border rounded-lg px-4 py-2"
+                min="1"
+                step="1"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Exactly 1 winner will be selected every X claims across all users.
+                Lower = more frequent wins.
+              </p>
             </div>
             
             <div className="flex items-center">

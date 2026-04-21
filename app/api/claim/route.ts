@@ -7,10 +7,26 @@ import ShareLink from '@/models/ShareLink';
 import VoucherPool from '@/models/VoucherPool';
 import Counter from '@/models/Counter';
 import { sendWinnerNotification } from '@/lib/email';
+import Settings from '@/models/Settings';
 
-// Configuration
-const CLAIMS_PER_WINNER = 3; // Exactly 1 winner per 500 claims
-const WINNER_COOLDOWN_DAYS = 2; // User must wait 2 days after winning before can win again
+// Cache for settings
+let cachedClaimsPerWinner: number | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL = 60 * 1000; // 1 minute
+
+async function getClaimsPerWinner(): Promise<number> {
+  if (cachedClaimsPerWinner !== null && Date.now() - cacheTimestamp < CACHE_TTL) {
+    return cachedClaimsPerWinner;
+  }
+  const settingsDoc = await Settings.findOne({ key: 'platformSettings' });
+  const value = settingsDoc?.value?.claimsPerWinner ?? 500;
+  cachedClaimsPerWinner = value;
+  cacheTimestamp = Date.now();
+  return value;
+}
+
+// Winner cooldown (can also be moved to settings if desired)
+const WINNER_COOLDOWN_DAYS = 2;
 
 export async function POST(req: NextRequest) {
   await dbConnect();
@@ -32,7 +48,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'No pending voucher found. Please scratch a card first.' }, { status: 400 });
   }
 
-  // Declare tempVoucher here BEFORE using it
   const tempVoucher = await Voucher.findById(user.currentVoucherId);
   if (!tempVoucher) {
     user.currentVoucherId = null;
@@ -40,14 +55,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Voucher expired. Please scratch again.' }, { status: 400 });
   }
 
-  // Check winner cooldown
+  // Winner cooldown
   if (user.lastWinAt) {
     const daysSinceLastWin = (Date.now() - new Date(user.lastWinAt).getTime()) / (1000 * 60 * 60 * 24);
     if (daysSinceLastWin < WINNER_COOLDOWN_DAYS) {
       const daysRemaining = Math.ceil(WINNER_COOLDOWN_DAYS - daysSinceLastWin);
       console.log(`[CLAIM] User on winner cooldown: ${daysRemaining} days remaining`);
       
-      // Still allow them to play, but treat as loss without incrementing streak
       tempVoucher.status = 'redeemed';
       await tempVoucher.save();
       user.currentVoucherId = null;
@@ -62,6 +76,9 @@ export async function POST(req: NextRequest) {
       });
     }
   }
+
+  // --- Fetch current Claims Per Winner setting (cached) ---
+  const CLAIMS_PER_WINNER = await getClaimsPerWinner();
 
   // Get or create claim counter
   let counter = await Counter.findOne({ name: 'claimCounter' });
@@ -82,7 +99,7 @@ export async function POST(req: NextRequest) {
     await counter.save();
   }
 
-  console.log(`[CLAIM] Claim #${counter.value}, Winner: ${isWinner}`);
+  console.log(`[CLAIM] Claim #${counter.value}, Winner: ${isWinner}, Threshold: ${CLAIMS_PER_WINNER}`);
 
   if (isWinner) {
     // Find an available voucher from the pool for this network and amount
@@ -94,7 +111,7 @@ export async function POST(req: NextRequest) {
 
     if (!availableVoucher) {
       console.log('[CLAIM] No available voucher found for:', user.network, tempVoucher.amount);
-      // Treat as loss if no voucher available
+      // Treat as loss
       user.consecutiveLosses = (user.consecutiveLosses || 0) + 1;
       tempVoucher.status = 'redeemed';
       await tempVoucher.save();
@@ -121,7 +138,7 @@ export async function POST(req: NextRequest) {
       console.log(`[CLAIM] Pool updated: ${pool.remainingVouchers} remaining for TZS ${pool.amount}`);
     }
 
-    // Record winner in database
+    // Record winner
     await Winner.create({
       userId,
       voucherId: availableVoucher._id,
@@ -131,12 +148,10 @@ export async function POST(req: NextRequest) {
       voucherCode: availableVoucher.voucherCode,
     });
 
-    // Reset consecutive losses
+    // Reset user state
     user.consecutiveLosses = 0;
     user.currentVoucherId = null;
     user.currentRevealedAmount = null;
-    
-    // Set last win time and increment total wins
     user.lastWinAt = new Date();
     user.totalWins = (user.totalWins || 0) + 1;
     await user.save();
@@ -146,8 +161,7 @@ export async function POST(req: NextRequest) {
 
     console.log(`[CLAIM] WINNER! Amount: ${tempVoucher.amount}, Code: ${availableVoucher.voucherCode}`);
     
-    // ✅ SEND EMAIL NOTIFICATION (don't await to not block response)
-    // Send email in background - user doesn't need to wait for it
+    // Send email in background
     (async () => {
       try {
         await sendWinnerNotification({
