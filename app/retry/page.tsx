@@ -26,10 +26,20 @@ export default function RetryPage() {
 
   if (status.cooldown) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-yellow-100">
-        <h2 className="text-2xl font-bold mb-4 text-black dark:text-black">Tafadhali, Jaribu tena baada ya</h2>
-        <CountdownTimer className="text-black dark:text-black" targetDate={new Date().getTime() + status.remaining} onComplete={() => router.push('/scratch')} />
-      </div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-yellow-100 p-4">
+  <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+    <h2 className="text-2xl font-bold mb-2 text-gray-800">Tafadhali, Jaribu tena baada ya</h2>
+    <div className="text-4xl font-mono font-bold text-yellow-600 my-4">
+      <CountdownTimer 
+        targetDate={new Date().getTime() + status.remaining} 
+        onComplete={() => router.push('/scratch')} 
+      />
+    </div>
+    <p className="text-sm text-gray-600 mt-4">
+      ⚠️ Ukifunga hapa itakulazimu kuanza upya na kushare link upya.
+    </p>
+  </div>
+</div>
     );
   }
 
