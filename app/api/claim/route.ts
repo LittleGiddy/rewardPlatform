@@ -9,7 +9,7 @@ import Counter from '@/models/Counter';
 import { sendWinnerNotification } from '@/lib/email';
 
 // Configuration
-const CLAIMS_PER_WINNER = 30; // Exactly 1 winner per 500 claims
+const CLAIMS_PER_WINNER = 3; // Exactly 1 winner per 500 claims
 const WINNER_COOLDOWN_DAYS = 2; // User must wait 2 days after winning before can win again
 
 export async function POST(req: NextRequest) {
