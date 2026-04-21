@@ -1,4 +1,6 @@
 import nodemailer from 'nodemailer';
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 // Configure email transporter
 const transporter = nodemailer.createTransport({
