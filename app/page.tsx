@@ -206,7 +206,7 @@ export default function Home() {
               <img 
                 src="/logo.png" 
                 alt="Vuna Vocha Logo" 
-                className="h-32 md:h-40 w-auto object-contain"
+                className="h-32 md:h-40 w-auto max-w-[85vw] object-contain"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
                 }}

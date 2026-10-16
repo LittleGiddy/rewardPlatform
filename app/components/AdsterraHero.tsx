@@ -31,5 +31,5 @@ export default function AdsterraHero() {
     console.log('Adsterra hero script injected');
   }, []);
 
-  return <div ref={containerRef} className="flex justify-center my-2" />;
+  return <div ref={containerRef} className="adsterra-container flex justify-center my-2" />;
 }

@@ -19,10 +19,36 @@
   }
 }
 
+html {
+  overflow-x: hidden;
+  overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+  overflow-x: clip;
+  max-width: 100%;
+}
+
+/* Keep injected third-party ads from forcing horizontal overflow on mobile */
+.adsterra-container,
+.adsterra-container > div,
+.adsterra-container iframe,
+.adsterra-container ins,
+.adsterra-container img,
+.adsterra-container object,
+.adsterra-container embed {
+  max-width: 100% !important;
+}
+
+.adsterra-container {
+  overflow: hidden;
+  width: 100%;
 }
 
 
