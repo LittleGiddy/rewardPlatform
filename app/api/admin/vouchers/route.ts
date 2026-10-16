@@ -1,124 +1,125 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/mongodb';
-import Voucher from '@/models/Voucher';
-import VoucherPool from '@/models/VoucherPool';
+import prisma from '@/lib/db';
+import type { Network, Prisma, VoucherStatus } from '@prisma/client';
 
-// GET - Fetch all vouchers
 export async function GET(req: NextRequest) {
-  await dbConnect();
-  
   const { searchParams } = new URL(req.url);
   const network = searchParams.get('network');
   const status = searchParams.get('status');
-  
-  let query: any = {};
-  if (network) query.network = network;
-  if (status) query.status = status;
-  
-  const vouchers = await Voucher.find(query)
-    .sort({ createdAt: -1 })
-    .limit(500);
-  
-  // Get pool summary
-  const pools = await VoucherPool.find().sort({ network: 1, amount: 1 });
-  
-  return NextResponse.json({ vouchers, pools });
+
+  const where: Prisma.VoucherWhereInput = {};
+  if (network) where.network = network as Network;
+  if (status) where.status = status as VoucherStatus;
+
+  const vouchers = await prisma.voucher.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+    take: 500,
+  });
+
+  const pools = await prisma.voucherPool.findMany({
+    orderBy: [{ network: 'asc' }, { amount: 'asc' }],
+  });
+
+  return NextResponse.json({
+    vouchers: vouchers.map((v) => ({ ...v, _id: v.id })),
+    pools: pools.map((p) => ({ ...p, _id: p.id })),
+  });
 }
 
-// POST - Add vouchers manually with codes
 export async function POST(req: NextRequest) {
-  await dbConnect();
-  
   const { network, amount, voucherCodes } = await req.json();
-  
+
   if (!network || !amount || !voucherCodes || !Array.isArray(voucherCodes)) {
     return NextResponse.json({ error: 'Missing required fields. Need network, amount, and voucherCodes array.' }, { status: 400 });
   }
-  
+
+  const parsedAmount = parseInt(amount);
   const addedVouchers = [];
-  const existingCodes = [];
-  
+  const existingCodes: string[] = [];
+
   for (const code of voucherCodes) {
-    // Check if voucher code already exists
-    const existing = await Voucher.findOne({ voucherCode: code.toUpperCase() });
+    const normalized = String(code).toUpperCase();
+
+    const existing = await prisma.voucher.findUnique({ where: { voucherCode: normalized } });
     if (existing) {
       existingCodes.push(code);
       continue;
     }
-    
-    const voucher = await Voucher.create({
-      network,
-      amount: parseInt(amount),
-      voucherCode: code.toUpperCase(),
-      status: 'available',
+
+    const voucher = await prisma.voucher.create({
+      data: {
+        network: network as Network,
+        amount: parsedAmount,
+        voucherCode: normalized,
+        status: 'available',
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      },
     });
     addedVouchers.push(voucher);
   }
-  
-  // Update or create pool
-  let pool = await VoucherPool.findOne({ network, amount: parseInt(amount) });
-  if (pool) {
-    pool.totalVouchers += addedVouchers.length;
-    pool.remainingVouchers += addedVouchers.length;
-    await pool.save();
-  } else if (addedVouchers.length > 0) {
-    pool = await VoucherPool.create({
-      network,
-      amount: parseInt(amount),
-      totalVouchers: addedVouchers.length,
-      remainingVouchers: addedVouchers.length,
+
+  if (addedVouchers.length > 0) {
+    await prisma.voucherPool.upsert({
+      where: { network_amount: { network: network as Network, amount: parsedAmount } },
+      update: {
+        totalVouchers: { increment: addedVouchers.length },
+        remainingVouchers: { increment: addedVouchers.length },
+      },
+      create: {
+        network: network as Network,
+        amount: parsedAmount,
+        totalVouchers: addedVouchers.length,
+        remainingVouchers: addedVouchers.length,
+      },
     });
   }
-  
-  return NextResponse.json({ 
-    success: true, 
+
+  const pool = await prisma.voucherPool.findUnique({
+    where: { network_amount: { network: network as Network, amount: parsedAmount } },
+  });
+
+  return NextResponse.json({
+    success: true,
     message: `Added ${addedVouchers.length} vouchers for ${network} - TZS ${amount}`,
     added: addedVouchers.length,
     duplicates: existingCodes,
-    pool
+    pool,
   });
 }
 
-// In the DELETE function, remove the status check
 export async function DELETE(req: NextRequest) {
-  await dbConnect();
-  
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
   const status = searchParams.get('status');
-  
-  // Clear all vouchers by status (new feature)
+
   if (status && ['available', 'redeemed', 'locked'].includes(status)) {
-    const result = await Voucher.deleteMany({ status });
-    return NextResponse.json({ 
-      success: true, 
-      message: `Deleted ${result.deletedCount} ${status} vouchers` 
+    const result = await prisma.voucher.deleteMany({ where: { status: status as VoucherStatus } });
+    return NextResponse.json({
+      success: true,
+      message: `Deleted ${result.count} ${status} vouchers`,
     });
   }
-  
+
   if (id) {
-    // Allow deleting ANY voucher regardless of status
-    const voucher = await Voucher.findById(id);
+    const voucher = await prisma.voucher.findUnique({ where: { id } });
     if (!voucher) {
       return NextResponse.json({ error: 'Voucher not found' }, { status: 404 });
     }
-    
-    // Update pool if voucher was available
+
     if (voucher.status === 'available') {
-      const pool = await VoucherPool.findOne({ 
-        network: voucher.network, 
-        amount: voucher.amount 
+      await prisma.voucherPool.updateMany({
+        where: { network: voucher.network, amount: voucher.amount },
+        data: {
+          totalVouchers: { decrement: 1 },
+          remainingVouchers: { decrement: 1 },
+        },
       });
-      if (pool) {
-        pool.totalVouchers -= 1;
-        pool.remainingVouchers -= 1;
-        await pool.save();
-      }
     }
-    
-    await Voucher.findByIdAndDelete(id);
+
+    await prisma.voucher.delete({ where: { id } });
     return NextResponse.json({ success: true, message: 'Voucher deleted' });
   }
-  
+
   return NextResponse.json({ error: 'No ID or status provided' }, { status: 400 });
 }

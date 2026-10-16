@@ -1,43 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/mongodb';
-import Settings from '@/models/Settings';
+import prisma from '@/lib/db';
+import type { Prisma } from '@prisma/client';
 
-interface Settings {
+interface PlatformSettings {
   winProbability: number;
   maxWinProbability: number;
   streakBonusEnabled: boolean;
   dailyAttemptsLimit: number;
   cooldownMinutes: number;
   shareRequired: number;
-  claimsPerWinner: number;   // new field
+  claimsPerWinner: number;
 }
 
-// Helper to get settings from DB with defaults
-async function getSettings(): Promise<Settings> {
-  await dbConnect();
-  
-  const defaults: Settings = {
-    winProbability: 0.002,
-    maxWinProbability: 0.05,
-    streakBonusEnabled: true,
-    dailyAttemptsLimit: 5,
-    cooldownMinutes: 10,
-    shareRequired: 3,
-    claimsPerWinner: 500,
-  };
+const defaults: PlatformSettings = {
+  winProbability: 0.002,
+  maxWinProbability: 0.05,
+  streakBonusEnabled: true,
+  dailyAttemptsLimit: 5,
+  cooldownMinutes: 10,
+  shareRequired: 3,
+  claimsPerWinner: 500,
+};
 
-  // Retrieve each setting individually or store as one document
-  let settingsDoc = await Settings.findOne({ key: 'platformSettings' });
+async function getSettings(): Promise<PlatformSettings> {
+  let settingsDoc = await prisma.settings.findUnique({ where: { key: 'platformSettings' } });
   if (!settingsDoc) {
-    // Create with defaults
-    settingsDoc = await Settings.create({
-      key: 'platformSettings',
-      value: defaults,
+    settingsDoc = await prisma.settings.create({
+      data: { key: 'platformSettings', value: defaults as unknown as Prisma.InputJsonValue },
     });
   }
 
-  // Merge with defaults (in case new fields are added later)
-  return { ...defaults, ...settingsDoc.value };
+  return { ...defaults, ...(settingsDoc.value as Record<string, unknown>) } as PlatformSettings;
 }
 
 export async function GET() {
@@ -46,21 +39,16 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  await dbConnect();
-  const updates: Partial<Settings> = await req.json();
+  const updates: Partial<PlatformSettings> = await req.json();
 
-  let settingsDoc = await Settings.findOne({ key: 'platformSettings' });
-  if (!settingsDoc) {
-    settingsDoc = await Settings.create({
-      key: 'platformSettings',
-      value: {},
-    });
-  }
+  const existing = await prisma.settings.findUnique({ where: { key: 'platformSettings' } });
+  const merged = { ...(existing?.value as Record<string, unknown> ?? {}), ...updates };
 
-  // Merge updates
-  settingsDoc.value = { ...settingsDoc.value, ...updates };
-  settingsDoc.updatedAt = new Date();
-  await settingsDoc.save();
+  await prisma.settings.upsert({
+    where: { key: 'platformSettings' },
+    update: { value: merged as Prisma.InputJsonValue },
+    create: { key: 'platformSettings', value: merged as Prisma.InputJsonValue },
+  });
 
   return NextResponse.json({ success: true });
 }

@@ -45,7 +45,7 @@ export default function SettingsPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Platform Settings</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Platform Settings</h1>
         <p className="text-gray-500 mt-1">Configure your voucher platform behavior</p>
       </div>
 

@@ -34,26 +34,42 @@ export default function ScratchCard({ amount, onReveal }: ScratchCardProps) {
     
     // Add text
     ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'center';
     ctx.font = 'bold 16px sans-serif';
-    ctx.fillText('BONYEZA HAPA', 90, 75);
+    ctx.fillText('BONYEZA HAPA', canvas.width / 2, canvas.height / 2 - 10);
     ctx.font = '12px sans-serif';
-    ctx.fillText('kufungua zawadi yako', 80, 100);
+    ctx.fillText('kufungua zawadi yako', canvas.width / 2, canvas.height / 2 + 15);
   }, []);
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDrawing.current || revealed) return;
+  const scratchAt = (clientX: number, clientY: number) => {
+    if (revealed) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
     ctx.globalCompositeOperation = 'destination-out';
     ctx.beginPath();
     ctx.arc(x, y, 20, 0, Math.PI * 2);
     ctx.fill();
     ctx.globalCompositeOperation = 'source-over';
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDrawing.current) return;
+    scratchAt(e.clientX, e.clientY);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (revealed) return;
+    e.preventDefault();
+    isDrawing.current = true;
+    const touch = e.touches[0];
+    if (touch) scratchAt(touch.clientX, touch.clientY);
   };
 
   const handleReveal = () => {
@@ -63,17 +79,19 @@ export default function ScratchCard({ amount, onReveal }: ScratchCardProps) {
   };
 
   return (
-    <div className="relative">
+    <div className="relative w-full max-w-[300px] mx-auto">
       <canvas
         ref={canvasRef}
         width={300}
         height={150}
-        className="border-4 border-yellow-500 rounded-lg cursor-pointer shadow-lg"
+        className="border-4 border-yellow-500 rounded-lg cursor-pointer shadow-lg w-full touch-none"
         onMouseDown={() => (isDrawing.current = true)}
         onMouseUp={() => (isDrawing.current = false)}
         onMouseLeave={() => (isDrawing.current = false)}
         onMouseMove={handleMouseMove}
         onClick={handleReveal}
+        onTouchStart={handleTouchMove}
+        onTouchEnd={handleReveal}
       />
       {revealed && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg shadow-inner">

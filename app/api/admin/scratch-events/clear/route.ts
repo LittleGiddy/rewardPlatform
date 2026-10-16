@@ -1,33 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/mongodb';
-import ScratchEvent from '@/models/ScratchEvent';
+import prisma from '@/lib/db';
+import type { Network, Prisma } from '@prisma/client';
 
 export async function DELETE(req: NextRequest) {
-  await dbConnect();
-  
   const { searchParams } = new URL(req.url);
   const olderThanDays = searchParams.get('olderThanDays');
   const network = searchParams.get('network');
-  
-  let query: any = {};
-  
+
+  const where: Prisma.ScratchEventWhereInput = {};
+
   if (olderThanDays) {
     const date = new Date();
     date.setDate(date.getDate() - parseInt(olderThanDays));
-    query.timestamp = { $lt: date };
+    where.timestamp = { lt: date };
   }
-  
+
   if (network) {
-    // Need to populate and filter by user network - more complex
-    // For simplicity, we'll delete all and let the frontend handle network filtering
-    // Or implement a more complex query
+    where.user = { network: network as Network };
   }
-  
-  const result = await ScratchEvent.deleteMany(query);
-  
-  return NextResponse.json({ 
-    success: true, 
-    message: `Deleted ${result.deletedCount} scratch events`,
-    deletedCount: result.deletedCount
+
+  const result = await prisma.scratchEvent.deleteMany({ where });
+
+  return NextResponse.json({
+    success: true,
+    message: `Deleted ${result.count} scratch events`,
+    deletedCount: result.count,
   });
 }

@@ -135,7 +135,7 @@ export default function AdminVouchersPage() {
     if (!confirm(`⚠️ Are you sure you want to delete ALL ${statusNames[status as keyof typeof statusNames]} vouchers? This action cannot be undone.`)) return;
     
     try {
-      const res = await axios.delete(`/api/admin/vouchers/clear?status=${status}`);
+      const res = await axios.delete(`/api/admin/vouchers?status=${status}`);
       setMessage(`✅ ${res.data.message}`);
       await fetchData(); // Immediate refresh after clear
       setTimeout(() => setMessage(''), 3000);
@@ -188,12 +188,12 @@ export default function AdminVouchersPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Voucher Management</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Voucher Management</h1>
           <p className="text-gray-500 mt-1">Upload voucher codes that winners will receive</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           {/* Auto-refresh toggle */}
           <button
             onClick={() => setIsAutoRefresh(!isAutoRefresh)}
@@ -217,7 +217,7 @@ export default function AdminVouchersPage() {
       </div>
 
       {/* Real-time Status Bar */}
-      <div className="mb-6 flex items-center justify-between text-sm">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <span className={`inline-block w-2 h-2 rounded-full ${isAutoRefresh ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></span>
@@ -309,10 +309,10 @@ export default function AdminVouchersPage() {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6 border-b">
+      <div className="flex gap-2 mb-6 border-b overflow-x-auto">
         <button
           onClick={() => setActiveTab('pools')}
-          className={`px-6 py-3 font-semibold transition ${
+          className={`px-4 sm:px-6 py-3 font-semibold transition whitespace-nowrap ${
             activeTab === 'pools'
               ? 'text-blue-600 border-b-2 border-blue-600'
               : 'text-gray-500 hover:text-gray-700'
@@ -327,7 +327,7 @@ export default function AdminVouchersPage() {
         </button>
         <button
           onClick={() => setActiveTab('add')}
-          className={`px-6 py-3 font-semibold transition ${
+          className={`px-4 sm:px-6 py-3 font-semibold transition whitespace-nowrap ${
             activeTab === 'add'
               ? 'text-blue-600 border-b-2 border-blue-600'
               : 'text-gray-500 hover:text-gray-700'
@@ -337,7 +337,7 @@ export default function AdminVouchersPage() {
         </button>
         <button
           onClick={() => setActiveTab('list')}
-          className={`px-6 py-3 font-semibold transition ${
+          className={`px-4 sm:px-6 py-3 font-semibold transition whitespace-nowrap ${
             activeTab === 'list'
               ? 'text-blue-600 border-b-2 border-blue-600'
               : 'text-gray-500 hover:text-gray-700'
@@ -350,7 +350,7 @@ export default function AdminVouchersPage() {
       {/* Pools Tab - Summary with Live Data */}
       {activeTab === 'pools' && (
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          <div className="p-6 border-b flex justify-between items-center">
+          <div className="p-6 border-b flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
             <div>
               <h2 className="text-xl font-bold">Voucher Pools Summary</h2>
               <p className="text-gray-500 text-sm">Overview of all voucher pools by network and amount</p>
@@ -510,7 +510,7 @@ export default function AdminVouchersPage() {
       {/* All Vouchers Tab */}
       {activeTab === 'list' && (
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          <div className="p-6 border-b flex justify-between items-center">
+          <div className="p-6 border-b flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
             <div>
               <h2 className="text-xl font-bold">All Vouchers</h2>
               <p className="text-gray-500 text-sm">Complete list of all voucher codes in the system</p>

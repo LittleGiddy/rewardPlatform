@@ -1,42 +1,30 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/mongodb';
-import mongoose from 'mongoose';
+import prisma from '@/lib/db';
 
 export async function GET() {
-  const results: any = {
+  const results: Record<string, unknown> = {
     timestamp: new Date().toISOString(),
-    checks: {}
+    checks: {},
   };
-  
-  // 1. Check environment variables
-  results.checks.env = {
-    MONGODB_URI: !!process.env.MONGODB_URI,
+
+  const checks = results.checks as Record<string, unknown>;
+
+  checks.env = {
+    DATABASE_URL: !!process.env.DATABASE_URL,
     JWT_SECRET: !!process.env.JWT_SECRET,
     NODE_ENV: process.env.NODE_ENV,
   };
-  
-  // 2. Test MongoDB connection
+
   try {
-    await dbConnect();
-    results.checks.mongodb = {
-      connected: true,
-      readyState: mongoose.connection.readyState,
-      dbName: mongoose.connection.name || 'unknown'
-    };
+    await prisma.$queryRaw`SELECT 1`;
+    checks.postgres = { connected: true };
+    checks.userCount = await prisma.user.count();
   } catch (error) {
-    results.checks.mongodb = {
+    checks.postgres = {
       connected: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
-  
-  // 3. Check User model
-  try {
-    const User = (await import('@/models/User')).default;
-    results.checks.userModel = { exists: true };
-  } catch (error) {
-    results.checks.userModel = { exists: false, error: String(error) };
-  }
-  
+
   return NextResponse.json(results);
 }

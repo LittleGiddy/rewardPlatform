@@ -1,42 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/mongodb';
-import User from '@/models/User';
-import Attempt from '@/models/Attempt';
-
-interface UserDoc {
-  _id: string;
-  network: string;
-  phone?: string;
-  createdAt: Date;
-  deviceFingerprint: string;
-  consecutiveLosses?: number;
-  totalWins?: number;
-  lastAttemptAt?: Date;
-  currentRevealedAmount?: number;
-  toObject(): any;
-}
-
-interface AttemptDoc {
-  count: number;
-}
+import prisma from '@/lib/db';
 
 export async function GET(req: NextRequest) {
-  await dbConnect();
-  
-  const users = await User.find().sort({ createdAt: -1 }).limit(100) as UserDoc[];
+  const users = await prisma.user.findMany({
+    orderBy: { createdAt: 'desc' },
+    take: 100,
+  });
   const today = new Date().toISOString().split('T')[0];
-  
-  const usersWithAttempts = await Promise.all(users.map(async (user: UserDoc) => {
-    const attemptDoc = await Attempt.findOne({ 
-      userFingerprint: user.deviceFingerprint, 
-      date: today 
-    }) as AttemptDoc | null;
-    
-    return {
-      ...user.toObject(),
-      attemptsToday: attemptDoc?.count || 0
-    };
+
+  const attempts = await prisma.attempt.findMany({
+    where: { date: today, userFingerprint: { in: users.map((u) => u.deviceFingerprint) } },
+    select: { userFingerprint: true, count: true },
+  });
+  const attemptMap = new Map(attempts.map((a) => [a.userFingerprint, a.count]));
+
+  const result = users.map((user) => ({
+    ...user,
+    _id: user.id,
+    attemptsToday: attemptMap.get(user.deviceFingerprint) || 0,
   }));
-  
-  return NextResponse.json(usersWithAttempts);
+
+  return NextResponse.json(result);
 }

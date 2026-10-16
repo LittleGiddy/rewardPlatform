@@ -1,43 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/mongodb';
-import Winner from '@/models/Winner';
-import Voucher from '@/models/Voucher';
-
-interface WinnerDoc {
-  _id: string;
-  prizeAmount: number;
-  network: string;
-  wonAt: Date;
-  userId?: {
-    network: string;
-    _id: string;
-  };
-  voucherId: string;
-  toObject(): any;
-}
-
-interface VoucherDoc {
-  voucherCode: string;
-  status: string;
-}
+import prisma from '@/lib/db';
 
 export async function GET(req: NextRequest) {
-  await dbConnect();
-  
-  const winners = await Winner.find()
-    .sort({ wonAt: -1 })
-    .populate('userId', 'network')
-    .limit(200) as WinnerDoc[];
-  
-  // Add voucher status
-  const winnersWithStatus = await Promise.all(winners.map(async (winner: WinnerDoc) => {
-    const voucher = await Voucher.findById(winner.voucherId) as VoucherDoc | null;
+  const winners = await prisma.winner.findMany({
+    orderBy: { wonAt: 'desc' },
+    take: 200,
+    include: {
+      user: { select: { id: true, network: true } },
+      voucher: { select: { voucherCode: true, status: true } },
+    },
+  });
+
+  const result = winners.map((winner) => {
+    const { user, voucher, ...rest } = winner;
     return {
-      ...winner.toObject(),
+      ...rest,
+      _id: winner.id,
+      userId: { _id: user.id, network: user.network },
       voucherCode: voucher?.voucherCode,
-      status: voucher?.status || 'unknown'
+      status: voucher?.status || 'unknown',
     };
-  }));
-  
-  return NextResponse.json(winnersWithStatus);
+  });
+
+  return NextResponse.json(result);
 }

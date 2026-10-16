@@ -133,12 +133,12 @@ export default function AdminScratchEventsPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Scratch Events</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Scratch Events</h1>
           <p className="text-gray-500 mt-1">Monitor and manage all scratch card activities</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <button
             onClick={() => setIsAutoRefresh(!isAutoRefresh)}
             className={`px-3 py-2 rounded-lg text-sm transition ${
@@ -160,7 +160,7 @@ export default function AdminScratchEventsPage() {
       </div>
 
       {/* Real-time Status Bar */}
-      <div className="mb-6 flex items-center justify-between text-sm">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <span className={`inline-block w-2 h-2 rounded-full ${isAutoRefresh ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></span>
@@ -307,7 +307,7 @@ export default function AdminScratchEventsPage() {
 
       {/* Events Table */}
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="p-6 border-b flex justify-between items-center">
+        <div className="p-6 border-b flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
           <div>
             <h2 className="text-xl font-bold">Scratch Events Log</h2>
             <p className="text-gray-500 text-sm">Complete history of all scratch activities</p>

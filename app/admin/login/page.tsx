@@ -161,9 +161,6 @@ export default function AdminLogin() {
             <p className="text-white/40 text-xs">
               Secure admin access only
             </p>
-            <p className="text-white/30 text-xs mt-2">
-              Default: admin / admin123
-            </p>
           </div>
         </div>
       </div>

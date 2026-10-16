@@ -97,12 +97,12 @@ const clearRecentActivities = async () => {
         </div>
       )}
 
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Dashboard</h1>
           <p className="text-gray-500 mt-1">Welcome back! Here's what's happening with your platform.</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <button
             onClick={() => {
               setClearType('old');
@@ -143,7 +143,7 @@ const clearRecentActivities = async () => {
 
       {/* Recent Activities */}
       <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
           <h2 className="text-xl font-bold text-gray-800">Recent Activities</h2>
           <div className="flex gap-2">
             <button

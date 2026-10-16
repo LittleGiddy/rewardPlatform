@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Network {
+  Yas
+  Airtel
+  Vodacom
+  Halotel
+  MTN
+}
+
+enum VoucherStatus {
+  available
+  locked
+ redeemed
+  expired
+}
+
+model User {
+  id                    String    @id @default(cuid())
+  phone                 String?
+  network               Network
+  deviceFingerprint     String    @unique
+  ipHash                String
+  createdAt             DateTime  @default(now())
+  currentVoucherId      String?   @unique
+  currentVoucher        Voucher?  @relation("CurrentVoucher", fields: [currentVoucherId], references: [id], onDelete: SetNull)
+  currentRevealedAmount Int?
+  lastAttemptAt         DateTime?
+  lockUntil             DateTime?
+  referralCode          String    @unique
+  consecutiveLosses     Int       @default(0)
+  totalWins             Int       @default(0)
+  totalAttempts         Int       @default(0)
+  lastWinAt             DateTime?
+
+  shareLink    ShareLink?
+  scratchEvents ScratchEvent[]
+  wins          Winner[]
+  wonVouchers   Voucher[]       @relation("WonVouchers")
+}
+
+model Voucher {
+  id          String        @id @default(cuid())
+  network     Network
+  amount      Int
+  voucherCode String?       @unique
+  status      VoucherStatus @default(available)
+  winnerId    String?
+  winner      User?         @relation("WonVouchers", fields: [winnerId], references: [id], onDelete: SetNull)
+  expiresAt   DateTime?
+  createdAt   DateTime      @default(now())
+  redeemedAt  DateTime?
+
+  currentHolder User?         @relation("CurrentVoucher")
+  scratchEvents ScratchEvent[]
+  winners       Winner[]
+
+  @@index([network, status])
+  @@index([createdAt])
+}
+
+model VoucherPool {
+  id                String   @id @default(cuid())
+  network           Network
+  amount            Int
+  totalVouchers     Int      @default(0)
+  remainingVouchers Int      @default(0)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([network, amount])
+}
+
+model Winner {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  voucherId   String
+  voucher     Voucher  @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  prizeAmount Int
+  network     Network
+  voucherCode String?
+  wonAt       DateTime @default(now())
+  notifiedAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([wonAt])
+  @@index([network])
+}
+
+model Attempt {
+  id               String    @id @default(cuid())
+  userFingerprint  String
+  date             String
+  count            Int       @default(0)
+  lockUntil        DateTime?
+
+  @@unique([userFingerprint, date])
+}
+
+model ScratchEvent {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  voucherId      String?
+  voucher        Voucher? @relation(fields: [voucherId], references: [id], onDelete: SetNull)
+  revealedAmount Int?
+  timestamp      DateTime @default(now())
+
+  @@index([timestamp])
+  @@index([userId])
+}
+
+model ShareLink {
+  id         String    @id @default(cuid())
+  userId     String    @unique
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code       String    @unique
+  clicks     Click[]
+  verifiedAt DateTime?
+}
+
+model Click {
+  id          String    @id @default(cuid())
+  shareLinkId String
+  shareLink   ShareLink @relation(fields: [shareLinkId], references: [id], onDelete: Cascade)
+  ip          String?
+  userAgent   String?
+  timestamp   DateTime  @default(now())
+  verified    Boolean   @default(false)
+
+  @@index([shareLinkId])
+}
+
+model Counter {
+  name  String   @id
+  value Int      @default(0)
+}
+
+model Settings {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}

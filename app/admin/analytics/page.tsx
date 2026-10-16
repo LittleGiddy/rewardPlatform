@@ -53,7 +53,7 @@ export default function AnalyticsPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Analytics Dashboard</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Analytics Dashboard</h1>
         <p className="text-gray-500 mt-1">Platform performance and conversion metrics</p>
       </div>
 
@@ -199,18 +199,20 @@ export default function AnalyticsPage() {
       {/* Hourly Activity */}
       <div className="bg-white rounded-xl shadow-lg p-6">
         <h2 className="text-xl font-bold mb-4">Hourly Activity (Last 24 Hours)</h2>
-        <div className="flex items-end gap-1 h-64">
-          {analytics.hourlyActivity.map((hourCount: number, idx: number) => (
-            <div key={idx} className="flex-1 flex flex-col items-center">
-              <div 
-                className="w-full bg-gradient-to-t from-blue-500 to-purple-500 rounded-t transition-all duration-300"
-                style={{ height: `${(hourCount / maxHourlyValue) * 100}%`, minHeight: '4px' }}
-              ></div>
-              <span className="text-xs mt-2 transform -rotate-45 origin-top-left">
-                {idx}:00
-              </span>
-            </div>
-          ))}
+        <div className="overflow-x-auto">
+          <div className="flex items-end gap-1 h-64 min-w-[600px]">
+            {analytics.hourlyActivity.map((hourCount: number, idx: number) => (
+              <div key={idx} className="flex-1 flex flex-col items-center">
+                <div 
+                  className="w-full bg-gradient-to-t from-blue-500 to-purple-500 rounded-t transition-all duration-300"
+                  style={{ height: `${(hourCount / maxHourlyValue) * 100}%`, minHeight: '4px' }}
+                ></div>
+                <span className="text-xs mt-2 transform -rotate-45 origin-top-left">
+                  {idx}:00
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
         <div className="mt-6 text-center text-sm text-gray-500">
           Peak activity shown in the chart above

@@ -31,12 +31,12 @@ export default function WinnersPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Winners Management</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Winners Management</h1>
           <p className="text-gray-500 mt-1">Track all voucher winners and redemptions</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}

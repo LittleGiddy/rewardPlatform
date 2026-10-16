@@ -1,67 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/mongodb';
-import Winner from '@/models/Winner';
-import User from '@/models/User';
-
+import prisma from '@/lib/db';
 
 export async function GET(req: NextRequest) {
-  await dbConnect();
-
-  const totalUsers = await User.countDocuments();
-  const totalWinners = await Winner.countDocuments();
+  const totalUsers = await prisma.user.count();
+  const totalWinners = await prisma.winner.count();
   const winRate = totalUsers > 0 ? (totalWinners / totalUsers) * 100 : 0;
 
-  // Get users with streaks
-  const usersWithStreaks = await User.find({ consecutiveLosses: { $gt: 0 } })
-    .sort({ consecutiveLosses: -1 })
-    .limit(10)
-    .select('consecutiveLosses network');
+  const usersWithStreaks = await prisma.user.findMany({
+    where: { consecutiveLosses: { gt: 0 } },
+    orderBy: { consecutiveLosses: 'desc' },
+    take: 10,
+    select: { id: true, consecutiveLosses: true, network: true },
+  });
 
-  // Get recent winners
-  const recentWinners = await Winner.find()
-    .sort({ wonAt: -1 })
-    .limit(10)
-    .populate('userId', 'network');
+  const recentWinners = await prisma.winner.findMany({
+    orderBy: { wonAt: 'desc' },
+    take: 10,
+    include: { user: { select: { network: true } } },
+  });
 
-  // Calculate average loss streak before winning
-  const winnersWithStreaks = await Winner.aggregate([
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'userId',
-        foreignField: '_id',
-        as: 'user'
-      }
-    },
-    {
-      $unwind: '$user'
-    },
-    {
-      $group: {
-        _id: null,
-        averageStreak: { $avg: '$user.consecutiveLosses' },
-        maxStreak: { $max: '$user.consecutiveLosses' }
-      }
-    }
-  ]);
+  const winnerStreakRows = await prisma.$queryRaw<{ avg: number | null; max: number | null }[]>`
+    SELECT AVG(u."consecutiveLosses")::float AS avg, MAX(u."consecutiveLosses") AS max
+    FROM "Winner" w
+    JOIN "User" u ON u.id = w."userId"
+  `;
 
   return NextResponse.json({
     summary: {
       totalUsers,
       totalWinners,
       winRate: winRate.toFixed(2) + '%',
-      expectedWinRate: '0.2% (1 in 500)'
+      expectedWinRate: '0.2% (1 in 500)',
     },
     streaks: {
-      averageLossStreakBeforeWin: winnersWithStreaks[0]?.averageStreak?.toFixed(0) || 0,
-      maxLossStreak: winnersWithStreaks[0]?.maxStreak || 0,
-      currentHighestStreak: usersWithStreaks[0]?.consecutiveLosses || 0
+      averageLossStreakBeforeWin: winnerStreakRows[0]?.avg?.toFixed(0) || 0,
+      maxLossStreak: winnerStreakRows[0]?.max || 0,
+      currentHighestStreak: usersWithStreaks[0]?.consecutiveLosses || 0,
     },
-    recentWinners: recentWinners.map(w => ({
+    recentWinners: recentWinners.map((w) => ({
       amount: w.prizeAmount,
-      network: w.userId?.network,
-      date: w.wonAt
+      network: w.user.network,
+      date: w.wonAt,
     })),
-    topStreaks: usersWithStreaks
+    topStreaks: usersWithStreaks.map((u) => ({
+      _id: u.id,
+      consecutiveLosses: u.consecutiveLosses,
+      network: u.network,
+    })),
   });
 }

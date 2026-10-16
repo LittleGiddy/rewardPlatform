@@ -30,18 +30,18 @@ export default function UsersPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Users Management</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Users Management</h1>
           <p className="text-gray-500 mt-1">View and manage all platform users</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <input
             type="text"
             placeholder="Search by ID or network..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="border rounded-lg px-4 py-2 w-64"
+            className="border rounded-lg px-4 py-2 w-full sm:w-64"
           />
           <button
             onClick={fetchUsers}

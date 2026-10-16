@@ -1,26 +1,22 @@
-import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/mongodb';
-import Voucher from '@/models/Voucher';
-import VoucherPool from '@/models/VoucherPool';
+import { NextResponse } from 'next/server';
+import prisma from '@/lib/db';
 
 export async function GET() {
-  await dbConnect();
-  
-  const vouchers = await Voucher.find({});
-  const pools = await VoucherPool.find({});
-  
+  const vouchers = await prisma.voucher.findMany();
+  const pools = await prisma.voucherPool.findMany();
+
   return NextResponse.json({
-    vouchers: vouchers.map(v => ({
+    vouchers: vouchers.map((v) => ({
       network: v.network,
       amount: v.amount,
       code: v.voucherCode,
-      status: v.status
+      status: v.status,
     })),
-    pools: pools.map(p => ({
+    pools: pools.map((p) => ({
       network: p.network,
       amount: p.amount,
       total: p.totalVouchers,
-      remaining: p.remainingVouchers
-    }))
+      remaining: p.remainingVouchers,
+    })),
   });
 }

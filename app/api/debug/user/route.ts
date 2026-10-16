@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/mongodb';
-import User from '@/models/User';
-import Attempt from '@/models/Attempt';
-import ShareLink from '@/models/ShareLink';
+import prisma from '@/lib/db';
 import { verifyToken } from '@/lib/jwt';
 
 export async function GET(req: NextRequest) {
-  await dbConnect();
-  
-  // Get token from cookie
   const token = req.cookies.get('token')?.value;
-  
+
   if (!token) {
     return NextResponse.json({ error: 'No token found' }, { status: 401 });
   }
@@ -20,22 +14,24 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
   }
 
-  const user = await User.findById(payload.userId);
+  const user = await prisma.user.findUnique({
+    where: { id: payload.userId },
+    include: { shareLink: { include: { clicks: { select: { ip: true } } } } },
+  });
   if (!user) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
   }
 
   const today = new Date().toISOString().split('T')[0];
-  const attemptDoc = await Attempt.findOne({ 
-    userFingerprint: user.deviceFingerprint, 
-    date: today 
+  const attemptDoc = await prisma.attempt.findUnique({
+    where: { userFingerprint_date: { userFingerprint: user.deviceFingerprint, date: today } },
   });
-  
-  const shareLink = await ShareLink.findOne({ userId: user._id });
-  const uniqueIPs = shareLink ? new Set(shareLink.clicks.map((c: any) => c.ip)).size : 0;
+
+  const shareLink = user.shareLink;
+  const uniqueIPs = shareLink ? new Set(shareLink.clicks.map((c) => c.ip)).size : 0;
 
   return NextResponse.json({
-    userId: user._id,
+    userId: user.id,
     network: user.network,
     phone: user.phone,
     attemptsToday: attemptDoc?.count || 0,

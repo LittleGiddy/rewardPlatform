@@ -1,17 +1,13 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/mongodb';
-import Winner from '@/models/Winner';
-import ScratchEvent from '@/models/ScratchEvent';
+import prisma from '@/lib/db';
 
 export async function GET() {
-  await dbConnect();
-  
-  const winnersCount = await Winner.countDocuments();
-  const scratchesCount = await ScratchEvent.countDocuments();
-  
+  const winnersCount = await prisma.winner.count();
+  const scratchesCount = await prisma.scratchEvent.count();
+
   return NextResponse.json({
     winners: winnersCount,
     scratchEvents: scratchesCount,
-    total: winnersCount + scratchesCount
+    total: winnersCount + scratchesCount,
   });
 }
