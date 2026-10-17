@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { sendWinnerNotification } from '@/lib/email';
+import { getClientIp, rateLimit, tooManyRequests } from '@/lib/ratelimit';
 
 let cachedClaimsPerWinner: number | null = null;
 let cacheTimestamp = 0;
@@ -28,12 +29,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const ip = getClientIp(req);
+  const limit = await rateLimit('claim', 15, '10 m', `${userId}:${ip}`);
+  if (!limit.success) {
+    return tooManyRequests(limit.reset);
+  }
+
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    include: { currentVoucher: true },
+    include: { currentVoucher: true, shareLink: { include: { clicks: { select: { ip: true } } } } },
   });
   if (!user) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  }
+
+  // Enforce the share requirement server-side: a user must have at least one
+  // unique visitor click on their referral link before claiming.
+  const uniqueClicks = user.shareLink
+    ? new Set(user.shareLink.clicks.map((c) => c.ip)).size
+    : 0;
+  if (uniqueClicks < 1) {
+    return NextResponse.json(
+      { error: 'Share not verified. Please share your link and wait for a friend to open it.' },
+      { status: 403 }
+    );
   }
 
   if (!user.currentVoucherId || !user.currentVoucher) {
@@ -115,7 +134,7 @@ export async function POST(req: NextRequest) {
         data: { status: 'redeemed', winnerId: user.id, redeemedAt: wonAt },
       }),
       prisma.voucherPool.updateMany({
-        where: { network: user.network, amount: tempVoucher.amount },
+        where: { network: user.network, amount: tempVoucher.amount, remainingVouchers: { gt: 0 } },
         data: { remainingVouchers: { decrement: 1 } },
       }),
       prisma.winner.create({

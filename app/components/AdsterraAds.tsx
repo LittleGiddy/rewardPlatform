@@ -18,9 +18,10 @@ export default function AdsterraAd({ adCode, className = '' }: AdsterraAdProps) 
   useEffect(() => {
     // Don't load ads on admin routes
     if (isAdminRoute) return;
-    
+
     // Only run in production and if not already loaded
     if (process.env.NODE_ENV !== 'production') return;
+    if (!adCode) return;
     if (isLoaded.current) return;
     if (!containerRef.current) return;
 
@@ -59,11 +60,11 @@ export default function AdsterraAd({ adCode, className = '' }: AdsterraAdProps) 
     isLoaded.current = true;
   }, [adCode, isAdminRoute]);
 
-  // Don't render anything on admin routes
-  if (isAdminRoute) return null;
+  // Don't render anything on admin routes or when no ad code is configured
+  if (isAdminRoute || !adCode) return null;
 
   return (
-    <div className={`adsterra-container ${className}`}>
+    <div className={`adsterra-container min-h-[50px] ${className}`}>
       <div ref={containerRef} />
     </div>
   );

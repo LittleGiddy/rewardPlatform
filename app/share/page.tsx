@@ -24,28 +24,25 @@ export default function SharePage() {
     // Get share link and user info
     Promise.all([
       axios.get('/api/share-link'),
-      axios.get('/api/debug/user'),
-      axios.get('/api/admin/vouchers')
-    ]).then(([shareRes, userRes, vouchersRes]) => {
+      axios.get('/api/me')
+    ]).then(([shareRes, userRes]) => {
       setLink(shareRes.data.link);
       const actualClicks = shareRes.data.clickCount;
       setClicks(actualClicks);
       // Display clicks: if actual >= 1, show 3/3, otherwise show actual
       setDisplayClicks(actualClicks >= 1 ? 3 : actualClicks);
-      
+
       const amount = userRes.data.currentVoucherAmount;
       setPotentialAmount(amount);
       setStreakInfo({
         consecutiveLosses: userRes.data.consecutiveLosses || 0,
         totalAttempts: userRes.data.totalAttempts || 0
       });
-      
-      const pools = vouchersRes.data.pools || [];
-      const userPool = pools.find((p: any) => p.amount === amount);
-      if (userPool) {
-        setPoolInfo(userPool);
+
+      if (typeof userRes.data.poolRemaining === 'number') {
+        setPoolInfo({ remainingVouchers: userRes.data.poolRemaining });
       }
-      
+
       setLoading(false);
     }).catch(err => {
       console.error('Failed to load data:', err);

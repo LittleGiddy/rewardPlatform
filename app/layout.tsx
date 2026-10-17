@@ -22,7 +22,7 @@ export const viewport: Viewport = {
 
 // IMPORTANT: Add metadataBase for absolute URLs
 export const metadata: Metadata = {
-  metadataBase: new URL("https://reward-platform-black.vercel.app"),
+  metadataBase: new URL("https://vunavocha.co.tz"),
   title: "Vuna Vocha - Shinda Vocha za TZS!",
   description: "Kwangua, shiriki, na shinda vocha za TZS kutoka Vodacom, Airtel, Yas, Halotel. Nafasi ya kushinda kila siku!",
   keywords: "vocha, zawadi, Tanzania, shinda pesa, Vuna Vocha, scratch card, vocha za simu",
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Vuna Vocha - Shinda Vocha za TZS!",
     description: "Kwangua kadi yako, shiriki kwa marafiki, na shinda vocha za kweli! Nafasi ya kushinda kila siku.",
-    url: "https://reward-platform-black.vercel.app",
+    url: "https://vunavocha.co.tz",
     siteName: "Vuna Vocha",
     locale: "sw_TZ",
     type: "website",

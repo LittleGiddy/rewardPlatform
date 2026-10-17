@@ -1,7 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (process.env.NODE_ENV === 'production' && req.cookies.get('admin_auth')?.value !== 'true') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   const vouchers = await prisma.voucher.findMany();
   const pools = await prisma.voucherPool.findMany();
 

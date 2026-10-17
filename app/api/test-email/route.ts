@@ -5,6 +5,10 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  if (process.env.NODE_ENV === 'production' && req.cookies.get('admin_auth')?.value !== 'true') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   const testWinner = {
     userName: 'Test User',
     userPhone: '0712345678',

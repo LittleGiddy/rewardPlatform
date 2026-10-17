@@ -1,10 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { verifyToken } from '@/lib/jwt';
+import { getClientIp, rateLimit, tooManyRequests } from '@/lib/ratelimit';
+
+// Run the expired-voucher sweep at most once every 5 minutes instead of on
+// every request (which was a deleteMany on each scratch).
+const CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
+let lastCleanupAt = 0;
+
+async function cleanupExpiredVouchers() {
+  if (Date.now() - lastCleanupAt < CLEANUP_INTERVAL_MS) return;
+  lastCleanupAt = Date.now();
+  const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000);
+  await prisma.voucher.deleteMany({
+    where: { status: 'locked', createdAt: { lt: thirtyMinsAgo } },
+  });
+}
 
 export async function GET(req: NextRequest) {
   try {
     console.log('[SCRATCH] === START ===');
+
+    const ip = getClientIp(req);
+    const limit = await rateLimit('scratch', 30, '10 m', ip);
+    if (!limit.success) {
+      return tooManyRequests(limit.reset);
+    }
 
     const token = req.cookies.get('token')?.value;
 
@@ -32,11 +53,8 @@ export async function GET(req: NextRequest) {
 
     console.log('[SCRATCH] User network:', user.network);
 
-    // Clean up old locked vouchers (older than 30 minutes)
-    const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000);
-    await prisma.voucher.deleteMany({
-      where: { status: 'locked', createdAt: { lt: thirtyMinsAgo } },
-    });
+    // Clean up old locked vouchers (throttled to once every 5 minutes)
+    await cleanupExpiredVouchers();
 
     // Check if user already has a pending voucher
     if (user.currentVoucher && user.currentVoucher.status === 'locked') {
@@ -142,29 +160,33 @@ export async function GET(req: NextRequest) {
     const potentialAmount = selectedPool.amount;
     console.log('[SCRATCH] Selected amount:', potentialAmount, 'for network:', user.network);
 
-    // Create a temporary locked voucher
-    const voucher = await prisma.voucher.create({
-      data: { network: user.network, amount: potentialAmount, status: 'locked' },
-    });
+    // Create a temporary locked voucher, attach it to the user and log the
+    // event atomically so partial writes can't leave a dangling state.
+    const voucher = await prisma.$transaction(async (tx) => {
+      const created = await tx.voucher.create({
+        data: { network: user.network, amount: potentialAmount, status: 'locked' },
+      });
 
-    // Update user
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        currentVoucherId: voucher.id,
-        currentRevealedAmount: potentialAmount,
-        lastAttemptAt: new Date(),
-      },
-    });
+      await tx.user.update({
+        where: { id: user.id },
+        data: {
+          currentVoucherId: created.id,
+          currentRevealedAmount: potentialAmount,
+          lastAttemptAt: new Date(),
+          totalAttempts: { increment: 1 },
+        },
+      });
 
-    // Log scratch event
-    await prisma.scratchEvent.create({
-      data: {
-        userId: user.id,
-        voucherId: voucher.id,
-        revealedAmount: potentialAmount,
-        timestamp: new Date(),
-      },
+      await tx.scratchEvent.create({
+        data: {
+          userId: user.id,
+          voucherId: created.id,
+          revealedAmount: potentialAmount,
+          timestamp: new Date(),
+        },
+      });
+
+      return created;
     });
 
     console.log('[SCRATCH] Success for user:', user.id);
