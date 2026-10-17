@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
+import VoucherScanner from './VoucherScanner';
 
 export default function AdminVouchersPage() {
   const [vouchers, setVouchers] = useState<any[]>([]);
@@ -476,7 +477,23 @@ export default function AdminVouchersPage() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Voucher Codes</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-700">Voucher Codes</label>
+                <VoucherScanner
+                  onCodesScanned={(codes) => {
+                    setVoucherCodes((prev) => {
+                      const existing = prev
+                        .split(/\n|,/)
+                        .map((c) => c.trim())
+                        .filter(Boolean);
+                      const merged = Array.from(new Set([...existing, ...codes]));
+                      return merged.join('\n');
+                    });
+                    setMessage(`✅ Added ${codes.length} scanned code(s)`);
+                    setTimeout(() => setMessage(''), 3000);
+                  }}
+                />
+              </div>
               <textarea
                 value={voucherCodes}
                 onChange={(e) => setVoucherCodes(e.target.value)}
@@ -487,6 +504,7 @@ export default function AdminVouchersPage() {
               />
               <p className="text-xs text-gray-500 mt-1">
                 Enter one voucher code per line or separate with commas. Codes will be converted to uppercase.
+                Use <strong>Scan Voucher</strong> to read numbers from a photo.
               </p>
             </div>
             
