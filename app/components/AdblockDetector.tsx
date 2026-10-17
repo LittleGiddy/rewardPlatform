@@ -1,10 +1,16 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function AdblockDetector() {
+  const pathname = usePathname();
   const [adblockDetected, setAdblockDetected] = useState<boolean | null>(null);
 
   useEffect(() => {
+    if (pathname?.startsWith('/admin')) {
+      return;
+    }
+
     const checkAdblock = async () => {
       // Method 1: Fetch a known ad script
       const testUrl = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
@@ -22,9 +28,6 @@ export default function AdblockDetector() {
         
         clearTimeout(timeoutId);
         
-        // If fetch doesn't error, ad blocker might not be blocking
-        // But we need a second check to be sure
-        
         // Method 2: Check for blocked DOM element
         const bait = document.createElement('div');
         bait.className = 'pub_300x250 pub_300x250m pub_728x90 text-ad textAd text_ad text_ads text-ads text-ad-links';
@@ -39,7 +42,7 @@ export default function AdblockDetector() {
           setAdblockDetected(isBlocked);
         });
         
-      } catch (error) {
+      } catch {
         // Fetch failed - likely blocked by ad blocker
         setAdblockDetected(true);
       }
@@ -48,7 +51,12 @@ export default function AdblockDetector() {
     // Delay check to ensure page is fully loaded
     const timer = setTimeout(checkAdblock, 1500);
     return () => clearTimeout(timer);
-  }, []);
+  }, [pathname]);
+
+  // Don't show anything on admin routes
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   // Don't show anything while checking
   if (adblockDetected === null) {
@@ -76,13 +84,14 @@ export default function AdblockDetector() {
             <li>Refresh the page by clicking the button below</li>
           </ol>
         </div>
-        <button
-          onClick={() => window.location.reload()}
-          className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
-        >
-          🔄 I&apos;ve Disabled AdBlocker - Refresh
-        </button>
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
+          >
+            I&apos;ve Disabled AdBlocker - Refresh
+          </button>
       </div>
     </div>
   );
 }
+

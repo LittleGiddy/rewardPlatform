@@ -62,6 +62,7 @@ export default function AdminLayout({
     { path: '/admin/winners', name: 'Winners', icon: '🏆' },
     { path: '/admin/analytics', name: 'Analytics', icon: '📈' },
     { path: '/admin/scratch-events', name: 'Scratch Events', icon: '🎰' },
+    { path: '/admin/accounts', name: 'Admin Accounts', icon: '🔑' },
     { path: '/admin/settings', name: 'Settings', icon: '⚙️' },
   ];
 
