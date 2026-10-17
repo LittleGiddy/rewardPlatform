@@ -64,7 +64,7 @@ export default function AdsterraAd({ adCode, className = '' }: AdsterraAdProps) 
   if (isAdminRoute || !adCode) return null;
 
   return (
-    <div className={`adsterra-container min-h-[50px] ${className}`}>
+    <div className={`adsterra-container min-h-[50px] text-gray-800 ${className}`}>
       <div ref={containerRef} />
     </div>
   );

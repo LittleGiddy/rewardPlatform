@@ -30,7 +30,7 @@ export default function SharePage() {
       const actualClicks = shareRes.data.clickCount;
       setClicks(actualClicks);
       // Display clicks: if actual >= 1, show 3/3, otherwise show actual
-      setDisplayClicks(actualClicks >= 1 ? 3 : actualClicks);
+      setDisplayClicks(actualClicks >= 1 ? 1 : actualClicks);
 
       const amount = userRes.data.currentVoucherAmount;
       setPotentialAmount(amount);
@@ -93,7 +93,7 @@ export default function SharePage() {
         const actualClicks = res.data.clickCount;
         setClicks(actualClicks);
         // Display clicks: if actual >= 1, show 3/3, otherwise show actual
-        setDisplayClicks(actualClicks >= 1 ? 3 : actualClicks);
+        setDisplayClicks(actualClicks >= 1 ? 1 : actualClicks);
       } catch (err) {
         console.error('Failed to refresh clicks:', err);
       }
@@ -119,7 +119,7 @@ export default function SharePage() {
   // Determine if button should be enabled (actual clicks >= 1)
   const isUnlocked = clicks >= 1;
   // Determine progress percentage (0%, 50%, or 100%)
-  const progressPercent = clicks >= 1 ? 100 : (displayClicks / 3) * 100;
+  const progressPercent = clicks >= 1 ? 100 : (displayClicks / 1) * 100;
 
   return (
     <>
@@ -225,7 +225,7 @@ export default function SharePage() {
             Shiriki Kufungua Nafasi Yako!
           </h2>
           <p className="text-center text-gray-600 mb-6">
-            Shiriki kwa <strong className="text-blue-600">MARAFIKI 3</strong>. 
+            Shiriki kwa <strong className="text-blue-600">RAFIKI 1</strong>. 
             Kila rafiki anapaswa kubonyeza link ili kukupa nafasi ya kushinda.
           </p>
           
@@ -288,7 +288,7 @@ export default function SharePage() {
           <div className="bg-gray-100 rounded-lg p-4 mb-6">
             <div className="flex justify-between items-center mb-2">
               <p className="font-medium text-gray-700">Vibonyezo vya Kipekee</p>
-              <p className="text-lg font-bold text-blue-600">{displayClicks} / 3</p>
+              <p className="text-lg font-bold text-blue-600">{displayClicks} / 1</p>
             </div>
             <div className="w-full bg-gray-300 rounded-full h-3">
               <div 
@@ -324,7 +324,7 @@ export default function SharePage() {
                 ? poolInfo?.remainingVouchers === 0 
                   ? '❌ Zawadi Zimeisha - Jaribu Tena' 
                   : '🔓 Fungua Nafasi Yangu!' 
-                : '🔒 Subiri Mrafiki 1 Afungue Kiungo'}
+                : '🔒 Subiri Rafiki 1 Afungue Kiungo'}
           </button>
 
           {/* Ad Between Claim Button and Footer */}

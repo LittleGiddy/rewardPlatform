@@ -158,6 +158,16 @@ export default function Home() {
           <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-purple-400 rounded-full blur-3xl"></div>
         </div>
 
+        {/* TOP ADSTERRA HERO AD */}
+        {process.env.NODE_ENV === 'production' && (
+          <div className="relative z-10 w-full px-4 pt-4">
+            <div className="max-w-md mx-auto bg-white/10 backdrop-blur-sm rounded-lg p-2">
+              <p className="text-xs text-gray-700 text-center mb-2">Advertisement</p>
+              <AdsterraHero />
+            </div>
+          </div>
+        )}
+
         {/* Floating Messages */}
         {!showOverlay && floatingMessages.map((msg) => (
           <div
@@ -296,16 +306,6 @@ export default function Home() {
               <span>24/7 Support</span>
             </div>
           </div>
-
-          {/* ADSTERRA HERO AD */}
-          {process.env.NODE_ENV === 'production' && (
-            <div className="w-full max-w-md mx-auto mb-8">
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2">
-                <p className="text-xs text-gray-400 text-center mb-2">Advertisement</p>
-                <AdsterraHero />
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Bottom Advertisement - Desktop (728x90) / Mobile (320x50) */}
@@ -313,13 +313,13 @@ export default function Home() {
           <div className="relative z-10 w-full px-4 pb-4">
             {process.env.NEXT_PUBLIC_ADSTERRA_AD3 && (
               <div className="hidden md:block max-w-3xl mx-auto bg-white/60 rounded-lg p-2">
-                <p className="text-xs text-gray-400 text-center mb-1">Advertisement</p>
+                <p className="text-xs text-gray-700 text-center mb-1">Advertisement</p>
                 <AdsterraAd adCode={process.env.NEXT_PUBLIC_ADSTERRA_AD3} />
               </div>
             )}
             {process.env.NEXT_PUBLIC_ADSTERRA_AD4 && (
               <div className="block md:hidden max-w-md mx-auto bg-white/60 rounded-lg p-2">
-                <p className="text-xs text-gray-400 text-center mb-1">Advertisement</p>
+                <p className="text-xs text-gray-700 text-center mb-1">Advertisement</p>
                 <AdsterraAd adCode={process.env.NEXT_PUBLIC_ADSTERRA_AD4} />
               </div>
             )}
@@ -328,7 +328,7 @@ export default function Home() {
 
         {/* Footer - All rights reserved at the bottom */}
         <footer ref={footerRef} className="relative z-10 text-center py-4 border-t border-gray-200">
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-700">
             &copy; {new Date().getFullYear()} Vuna Vocha. All rights reserved. Developed by LITTLE GIDDY
           </p>
         </footer>

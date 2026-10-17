@@ -15,13 +15,13 @@ export default function AdsterraHero() {
 
     // Create the main ad script
     const script = document.createElement('script');
-    script.src = 'https://pl29131327.profitablecpmratenetwork.com/53fcb9e75a8418e03d812bfaa46c2f3d/invoke.js';
+    script.src = 'https://pl31889625.profitableratecpmnetwork.com/f4c39acf32779c08e2e9c47256dbb971/invoke.js';
     script.async = true;
     script.setAttribute('data-cfasync', 'false');
     
     // Create the container div that the script expects
     const containerDiv = document.createElement('div');
-    containerDiv.id = 'container-53fcb9e75a8418e03d812bfaa46c2f3d';
+    containerDiv.id = 'container-f4c39acf32779c08e2e9c47256dbb971';
     
     // Append elements in the correct order
     containerRef.current.appendChild(containerDiv);

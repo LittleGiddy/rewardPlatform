@@ -20,7 +20,7 @@ export default function PopunderScript() {
     <Script
       id="adsterra-popunder"
       strategy="afterInteractive"
-      src="https://pl29158117.profitablecpmratenetwork.com/00/13/1c/00131cbdab924a2216b4d323b9872f62.js"
+      src="https://pl31889624.profitableratecpmnetwork.com/cd/cd/a6/cdcda6a239a461180ebd8c7bbe2ae1a0.js"
     />
   );
 }

@@ -9,7 +9,7 @@ export default function SettingsPage() {
     streakBonusEnabled: true,
     dailyAttemptsLimit: 5,
     cooldownMinutes: 10,
-    shareRequired: 3,
+    shareRequired: 1,
     claimsPerWinner: 500,   // 👈 NEW FIELD
   });
   const [loading, setLoading] = useState(false);

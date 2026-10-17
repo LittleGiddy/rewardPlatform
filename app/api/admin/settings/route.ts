@@ -18,7 +18,7 @@ const defaults: PlatformSettings = {
   streakBonusEnabled: true,
   dailyAttemptsLimit: 5,
   cooldownMinutes: 10,
-  shareRequired: 3,
+  shareRequired: 1,
   claimsPerWinner: 500,
 };
 
