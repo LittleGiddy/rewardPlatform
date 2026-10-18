@@ -50,8 +50,8 @@ export const metadata: Metadata = {
     images: ["/vuna.jpg"],
   },
   icons: {
-    icon: "/favicon.ico",
-    apple: "/apple-icon.png",
+    icon: "/logo.png",
+    apple: "/logo.png",
   },
   robots: {
     index: true,
