@@ -81,6 +81,7 @@ const clearRecentActivities = async () => {
     { title: 'Total Winners', value: stats?.totalWinners || 0, icon: '🏆', color: 'from-yellow-500 to-yellow-600' },
     { title: 'Vouchers Remaining', value: stats?.remainingVouchers || 0, icon: '🎫', color: 'from-green-500 to-green-600' },
     { title: 'Win Rate', value: `${stats?.winRate || 0}%`, icon: '📊', color: 'from-red-500 to-red-600' },
+    { title: 'Claims Left For Winner', value: stats?.claimsUntilNextWinner ?? 0, icon: '🎯', color: 'from-pink-500 to-pink-600' },
     { title: 'Active Users Today', value: stats?.activeUsersToday || 0, icon: '🔥', color: 'from-orange-500 to-orange-600' },
   ];
 

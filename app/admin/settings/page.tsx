@@ -14,10 +14,29 @@ export default function SettingsPage() {
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [winnerProgress, setWinnerProgress] = useState<{
+    claimsPerWinner: number;
+    claimsMade: number;
+    claimsUntilNextWinner: number;
+  } | null>(null);
 
   useEffect(() => {
     fetchSettings();
+    fetchWinnerProgress();
   }, []);
+
+  const fetchWinnerProgress = async () => {
+    try {
+      const res = await axios.get('/api/admin/stats');
+      setWinnerProgress({
+        claimsPerWinner: res.data.claimsPerWinner,
+        claimsMade: res.data.claimsMade,
+        claimsUntilNextWinner: res.data.claimsUntilNextWinner,
+      });
+    } catch (err) {
+      console.error('Failed to fetch winner progress:', err);
+    }
+  };
 
   const fetchSettings = async () => {
     try {
@@ -34,6 +53,7 @@ export default function SettingsPage() {
     try {
       await axios.post('/api/admin/settings', settings);
       setMessage('✅ Settings saved successfully!');
+      await fetchWinnerProgress();
     } catch (err) {
       setMessage('❌ Failed to save settings');
     } finally {
@@ -127,6 +147,33 @@ export default function SettingsPage() {
                 Exactly 1 winner will be selected every X claims across all users.
                 Lower = more frequent wins.
               </p>
+              {winnerProgress && (
+                <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Claims left until next winner</span>
+                    <span className="font-bold text-gray-900">
+                      {winnerProgress.claimsUntilNextWinner}
+                    </span>
+                  </div>
+                  <div className="mt-2 w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all"
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          ((winnerProgress.claimsMade % winnerProgress.claimsPerWinner) /
+                            winnerProgress.claimsPerWinner) *
+                            100
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    {winnerProgress.claimsMade % winnerProgress.claimsPerWinner} of{' '}
+                    {winnerProgress.claimsPerWinner} claims made since the last winner
+                  </p>
+                </div>
+              )}
             </div>
             
             <div className="flex items-center">
